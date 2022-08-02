@@ -326,14 +326,18 @@ def test_coarsened_targets(transitive_targets_rule_runner: RuleRunner) -> None:
     )
 
     def assert_coarsened(
-        a: Address, expected_members: List[Address], expected_dependencies: List[Address]
-    ) -> None:
+            a: Address, expected_members: List[Address], expected_dependencies: List[Address]
+        ) -> None:
         coarsened_targets = transitive_targets_rule_runner.request(
             CoarsenedTargets,
             [Addresses([a])],
         )
         assert list(sorted(t.address for t in coarsened_targets[0].members)) == expected_members
-        assert list(sorted(d for d in coarsened_targets[0].dependencies)) == expected_dependencies
+        assert (
+            list(sorted(iter(coarsened_targets[0].dependencies)))
+            == expected_dependencies
+        )
+
 
     # BUILD targets are never involved in cycles, and so always coarsen to themselves.
     assert_coarsened(

@@ -49,9 +49,9 @@ class Shunit2Shell(Enum):
         matches = re.match(rb"^#! *[/\w]*/(?P<program>\w+) *(?P<arg>\w*)", first_line)
         if not matches:
             return None
-        program = matches.group("program")
+        program = matches["program"]
         if program == b"env":
-            program = matches.group("arg")
+            program = matches["arg"]
         try:
             return cls(program.decode())
         except ValueError:
@@ -70,9 +70,7 @@ class Shunit2Shell(Enum):
                 self.zsh: "--version",
             },
         )
-        if not arg:
-            return None
-        return BinaryPathTest((arg,))
+        return BinaryPathTest((arg,)) if arg else None
 
 
 class Shunit2TestsDependencies(Dependencies):

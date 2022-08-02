@@ -283,8 +283,7 @@ async def find_interpreter(
     path, fingerprint = result.stdout.decode().strip().splitlines()
 
     if pex_runtime_env.verbosity > 0:
-        log_output = result.stderr.decode()
-        if log_output:
+        if log_output := result.stderr.decode():
             logger.info("%s", log_output)
 
     return PythonExecutable(path=path, fingerprint=fingerprint)
@@ -469,8 +468,7 @@ async def build_pex(
     result = await Get(ProcessResult, MultiPlatformProcess({platform: process}))
 
     if pex_runtime_env.verbosity > 0:
-        log_output = result.stderr.decode()
-        if log_output:
+        if log_output := result.stderr.decode():
             logger.info("%s", log_output)
 
     digest = (

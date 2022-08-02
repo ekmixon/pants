@@ -12,9 +12,7 @@ from pants.option.custom_types import UnsetBool, dict_with_files_option, dir_opt
 
 class CoercingOptionEncoder(CoercingEncoder):
     def default(self, o):
-        if o is UnsetBool:
-            return "_UNSET_BOOL_ENCODING"
-        return super().default(o)
+        return "_UNSET_BOOL_ENCODING" if o is UnsetBool else super().default(o)
 
 
 def stable_option_fingerprint(obj):
@@ -86,19 +84,18 @@ class OptionsFingerprinter:
         """
         filepath = os.path.normpath(filepath)
         root = get_buildroot()
-        if not os.path.abspath(filepath) == filepath:
+        if os.path.abspath(filepath) != filepath:
             # If not absolute, assume relative to the build root.
             return os.path.join(root, filepath)
-        else:
-            if ".." in os.path.relpath(filepath, root).split(os.path.sep):
-                # The path wasn't in the buildroot. This is an error because it violates the pants being
-                # hermetic.
-                raise ValueError(
-                    "Received a file_option that was not inside the build root:\n"
-                    "  file_option: {filepath}\n"
-                    "  build_root:  {buildroot}\n".format(filepath=filepath, buildroot=root)
-                )
-            return filepath
+        if ".." in os.path.relpath(filepath, root).split(os.path.sep):
+            # The path wasn't in the buildroot. This is an error because it violates the pants being
+            # hermetic.
+            raise ValueError(
+                "Received a file_option that was not inside the build root:\n"
+                "  file_option: {filepath}\n"
+                "  build_root:  {buildroot}\n".format(filepath=filepath, buildroot=root)
+            )
+        return filepath
 
     def _fingerprint_dirs(self, dirpaths, topdown=True, onerror=None, followlinks=False):
         """Returns a fingerprint of the given file directories and all their sub contents.
@@ -157,5 +154,4 @@ class OptionsFingerprinter:
                         final[k].append(f.read())
                 else:
                     final[k].append(sub_value)
-        fingerprint = stable_option_fingerprint(final)
-        return fingerprint
+        return stable_option_fingerprint(final)

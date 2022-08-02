@@ -173,13 +173,13 @@ class InterpreterConstraints(FrozenOrderedSet[Requirement], EngineAwareParameter
     def _includes_version(
         self, major_minor: str, last_patch: int = _EXPECTED_LAST_PATCH_VERSION
     ) -> bool:
-        patch_versions = list(reversed(range(0, last_patch + 1)))
-        for req in self:
-            if any(
+        patch_versions = list(reversed(range(last_patch + 1)))
+        return any(
+            any(
                 req.specifier.contains(f"{major_minor}.{p}") for p in patch_versions  # type: ignore[attr-defined]
-            ):
-                return True
-        return False
+            )
+            for req in self
+        )
 
     def includes_python2(self) -> bool:
         """Checks if any of the constraints include Python 2.
@@ -195,15 +195,21 @@ class InterpreterConstraints(FrozenOrderedSet[Requirement], EngineAwareParameter
         The constraints may also be compatible with later versions; this is the lowest version that
         still works.
         """
-        for major_minor in sorted(interpreter_universe, key=_major_minor_to_int):
-            if self._includes_version(major_minor):
-                return major_minor
-        return None
+        return next(
+            (
+                major_minor
+                for major_minor in sorted(
+                    interpreter_universe, key=_major_minor_to_int
+                )
+                if self._includes_version(major_minor)
+            ),
+            None,
+        )
 
     def _requires_python3_version_or_newer(
         self, *, allowed_versions: Iterable[str], prior_version: str
     ) -> bool:
-        patch_versions = list(reversed(range(0, _EXPECTED_LAST_PATCH_VERSION)))
+        patch_versions = list(reversed(range(_EXPECTED_LAST_PATCH_VERSION)))
         # We only need to look at the prior Python release. For example, consider Python 3.8+
         # looking at 3.7. If using something like `>=3.5`, Py37 will be included.
         # `==3.6.*,!=3.7.*,==3.8.*` is extremely unlikely, and even that will work correctly as
@@ -251,10 +257,11 @@ class InterpreterConstraints(FrozenOrderedSet[Requirement], EngineAwareParameter
         def all_valid_patch_versions(major_minor: str) -> list[int]:
             return [
                 p
-                for p in range(0, _EXPECTED_LAST_PATCH_VERSION + 1)
+                for p in range(_EXPECTED_LAST_PATCH_VERSION + 1)
                 for req in self
-                if req.specifier.contains(f"{major_minor}.{p}")  # type: ignore[attr-defined]
+                if req.specifier.contains(f"{major_minor}.{p}")
             ]
+
 
         result = []
 
@@ -315,5 +322,5 @@ def _major_minor_to_int(major_minor: str) -> tuple[int, int]:
 
 def _not_in_contiguous_range(nums: list[int]) -> list[int]:
     # Expects list to already be sorted and have 1+ elements.
-    expected = {i for i in range(nums[0], nums[-1])}
+    expected = set(range(nums[0], nums[-1]))
     return sorted(expected - set(nums))

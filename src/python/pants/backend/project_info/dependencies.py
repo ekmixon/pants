@@ -98,11 +98,10 @@ async def dependencies(
     for tgt in targets:
         if include_source:
             address_strings.add(tgt.address.spec)
-        if include_3rdparty:
-            if tgt.has_field(PythonRequirementsField):
-                third_party_requirements.update(
-                    str(python_req) for python_req in tgt[PythonRequirementsField].value
-                )
+        if include_3rdparty and tgt.has_field(PythonRequirementsField):
+            third_party_requirements.update(
+                str(python_req) for python_req in tgt[PythonRequirementsField].value
+            )
 
     with dependencies_subsystem.line_oriented(console) as print_stdout:
         for address in sorted(address_strings):

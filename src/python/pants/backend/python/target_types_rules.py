@@ -323,17 +323,17 @@ async def inject_python_distribution_dependencies(
         module_owners.update(unambiguous_owners)
 
     with_binaries = original_tgt.target[PythonProvidesField].value.binaries
-    if not with_binaries:
-        with_binaries_addresses = Addresses()
-    else:
-        # Note that we don't validate that these are all `pex_binary` targets; we don't care about
-        # that here. `setup_py.py` will do that validation.
-        with_binaries_addresses = await Get(
+    with_binaries_addresses = (
+        await Get(
             Addresses,
             UnparsedAddressInputs(
-                with_binaries.values(), owning_address=request.dependencies_field.address
+                with_binaries.values(),
+                owning_address=request.dependencies_field.address,
             ),
         )
+        if with_binaries
+        else Addresses()
+    )
 
     return InjectedDependencies(
         Addresses(module_owners) + with_binaries_addresses + all_entry_points.pex_binary_addresses

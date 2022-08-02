@@ -32,18 +32,13 @@ class HelpJSONEncoder(json.JSONEncoder):
             return o.__name__
         if isinstance(o, type):
             return type.__name__
-        if isinstance(o, Enum):
-            return o.value
-        return super().default(o)
+        return o.value if isinstance(o, Enum) else super().default(o)
 
 
 def to_help_str(val) -> str:
     if isinstance(val, (list, dict)):
         return json.dumps(val, sort_keys=True, indent=2, cls=HelpJSONEncoder)
-    if isinstance(val, Enum):
-        return str(val.value)
-    else:
-        return str(val)
+    return str(val.value) if isinstance(val, Enum) else str(val)
 
 
 @dataclass(frozen=True)
@@ -133,10 +128,10 @@ def pretty_print_type_hint(hint: Any) -> str:
     if getattr(hint, "__origin__", None) == Union:
         union_members = hint.__args__
         hint_str = " | ".join(pretty_print_type_hint(member) for member in union_members)
-    # NB: Checking for GenericMeta is only for Python 3.6 because some `typing` classes like
-    # `typing.Iterable` have its type, whereas Python 3.7+ removes it. Remove this check
-    # once we drop support for Python 3.6.
-    elif isinstance(hint, type) and not str(type(hint)) == "<class 'typing.GenericMeta'>":
+    elif (
+        isinstance(hint, type)
+        and str(type(hint)) != "<class 'typing.GenericMeta'>"
+    ):
         hint_str = hint.__name__
     else:
         hint_str = str(hint)
@@ -293,18 +288,15 @@ class HelpInfoExtracter:
             fallback = []
         elif is_dict_option(kwargs):
             fallback = {}
-        default = (
+        return (
             ranked_default.value
             if ranked_default and ranked_default.value is not None
             else fallback
         )
-        return default
 
     @staticmethod
     def stringify_type(t: Type) -> str:
-        if t == dict:
-            return "{'key1': val1, 'key2': val2, ...}"
-        return f"<{t.__name__}>"
+        return "{'key1': val1, 'key2': val2, ...}" if t == dict else f"<{t.__name__}>"
 
     @staticmethod
     def compute_metavar(kwargs):
@@ -324,11 +316,7 @@ class HelpInfoExtracter:
                 metavar = f'"{stringify(dict)}"'
             else:
                 metavar = stringify(kwargs.get("type", str))
-        if is_list_option(kwargs):
-            # For lists, the metavar (either explicit or deduced) is the representation
-            # of a single list member, so we turn the help string into a list of those here.
-            return f'"[{metavar}, {metavar}, ...]"'
-        return metavar
+        return f'"[{metavar}, {metavar}, ...]"' if is_list_option(kwargs) else metavar
 
     @staticmethod
     def compute_choices(kwargs) -> Optional[Tuple[str, ...]]:
@@ -435,7 +423,7 @@ class HelpInfoExtracter:
         # Global options have three env var variants. The last one is the most human-friendly.
         env_var = Parser.get_env_var_names(self._scope, dest)[-1]
 
-        ret = OptionHelpInfo(
+        return OptionHelpInfo(
             display_args=tuple(display_args),
             comma_separated_display_args=", ".join(display_args),
             scoped_cmd_line_args=tuple(scoped_cmd_line_args),
@@ -450,7 +438,8 @@ class HelpInfoExtracter:
             removal_version=removal_version,
             removal_hint=removal_hint,
             choices=choices,
-            comma_separated_choices=None if choices is None else ", ".join(choices),
+            comma_separated_choices=None
+            if choices is None
+            else ", ".join(choices),
             value_history=None,
         )
-        return ret

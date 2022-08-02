@@ -30,13 +30,13 @@ class Platform(Enum):
             return None
 
     @memoized_classproperty
-    def linux(cls) -> Platform:
+    def linux(self) -> Platform:
         """Deprecated, backward-compatible notation for linux on Intel."""
         Platform.deprecated_due_to_no_architecture()
         return Platform.linux_x86_64
 
     @memoized_classproperty
-    def darwin(cls) -> Platform:
+    def darwin(self) -> Platform:
         """Deprecated, backward-compatible notation for Mac OS on Intel."""
         Platform.deprecated_due_to_no_architecture()
         return Platform.macos_x86_64
@@ -61,7 +61,7 @@ class Platform(Enum):
 
     # TODO: try to turn all of these accesses into v2 dependency injections!
     @memoized_classproperty
-    def current(cls) -> Platform:
+    def current(self) -> Platform:
         return Platform(f"{get_normalized_os_name()}_{get_normalized_arch_name()}")
 
     @staticmethod

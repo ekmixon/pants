@@ -252,14 +252,14 @@ class Scheduler:
         with temporary_file_path() as path:
             self.visualize_rule_graph_to_file(path)
             with open(path) as fd:
-                for line in fd.readlines():
+                for line in fd:
                     yield line.rstrip()
 
     def rule_subgraph_visualization(self, root_subject_types: list[type], product_type: type):
         with temporary_file_path() as path:
             self.visualize_rule_subgraph_to_file(path, root_subject_types, product_type)
             with open(path, "r") as fd:
-                for line in fd.readlines():
+                for line in fd:
                     yield line.rstrip()
 
     def rule_graph_consumed_types(
@@ -492,7 +492,10 @@ class SchedulerSession:
             others_msg = f"\n(and {len(throws) - 1} more)" if len(throws) > 1 else ""
             if etb:
                 sep = "\n  in "
-                engine_traceback_str = "Engine traceback:" + sep + sep.join(reversed(etb)) + "\n"
+                engine_traceback_str = (
+                    f"Engine traceback:{sep}{sep.join(reversed(etb))}" + "\n"
+                )
+
             raise ExecutionError(
                 f"{exception_noun} encountered:\n\n"
                 f"{engine_traceback_str}"

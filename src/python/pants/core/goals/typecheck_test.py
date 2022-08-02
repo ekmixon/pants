@@ -81,9 +81,7 @@ class ConditionallySucceedsRequest(MockTypecheckRequest):
 
     @staticmethod
     def exit_code(addresses: Iterable[Address]) -> int:
-        if any(address.target_name == "bad" for address in addresses):
-            return 127
-        return 0
+        return 127 if any(address.target_name == "bad" for address in addresses) else 0
 
 
 class SkippedRequest(MockTypecheckRequest):

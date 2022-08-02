@@ -35,10 +35,11 @@ def assert_counts(
         (
             line
             for line in stdout.splitlines()
-            if len(line.split()) in (6, 7) and line.split()[0] == lang
+            if len(line.split()) in {6, 7} and line.split()[0] == lang
         ),
         None,
     )
+
     assert summary_line is not None, f"Found no output line for {lang} given stdout:\n {stdout}"
     fields = summary_line.split()
     assert num_files == int(fields[1])

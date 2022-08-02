@@ -53,11 +53,11 @@ class FortranExtensions(Field):
     @classmethod
     def compute_value(cls, raw_value: Optional[Iterable[str]], address: Address) -> Tuple[str, ...]:
         value_or_default = super().compute_value(raw_value, address)
-        # Add some arbitrary validation to test that hydration/validation works properly.
-        bad_extensions = [
-            extension for extension in value_or_default if not extension.startswith("Fortran")
-        ]
-        if bad_extensions:
+        if bad_extensions := [
+            extension
+            for extension in value_or_default
+            if not extension.startswith("Fortran")
+        ]:
             raise InvalidFieldException(
                 f"The {repr(cls.alias)} field in target {address} expects all elements to be "
                 f"prefixed by `Fortran`. Received {bad_extensions}.",
@@ -157,9 +157,6 @@ def test_get_field() -> None:
     assert default_field_tgt[FortranExtensions].value == ()
     assert default_field_tgt.get(FortranExtensions).value == ()
     assert default_field_tgt.get(FortranExtensions, default_raw_value=["FortranExt2"]).value == ()
-    # Example of a call site applying its own default value instead of the field's default value.
-    assert default_field_tgt[FortranExtensions].value or 123 == 123
-
     assert (
         FortranTarget.class_get_field(FortranExtensions, union_membership=UnionMembership({}))
         is FortranExtensions
@@ -280,15 +277,18 @@ def test_add_custom_fields() -> None:
 
 
 def test_override_preexisting_field_via_new_target() -> None:
-    # To change the behavior of a pre-existing field, you must create a new target as it would not
-    # be safe to allow plugin authors to change the behavior of core target types.
-    #
-    # Because the Target API does not care about the actual target type and we only check that the
-    # target has the required fields via Target.has_fields(), it is safe to create a new target
-    # that still works where the original target was expected.
-    #
-    # However, this means that we must ensure `Target.get()` and `Target.has_fields()` will work
-    # with subclasses of the original `Field`s.
+# To change the behavior of a pre-existing field, you must create a new target as it would not
+# be safe to allow plugin authors to change the behavior of core target types.
+#
+# Because the Target API does not care about the actual target type and we only check that the
+# target has the required fields via Target.has_fields(), it is safe to create a new target
+# that still works where the original target was expected.
+#
+# However, this means that we must ensure `Target.get()` and `Target.has_fields()` will work
+# with subclasses of the original `Field`s.
+
+
+
 
     class CustomFortranExtensions(FortranExtensions):
         banned_extensions = ("FortranBannedExt",)
@@ -296,21 +296,21 @@ def test_override_preexisting_field_via_new_target() -> None:
 
         @classmethod
         def compute_value(
-            cls, raw_value: Optional[Iterable[str]], address: Address
-        ) -> Tuple[str, ...]:
+                    cls, raw_value: Optional[Iterable[str]], address: Address
+                ) -> Tuple[str, ...]:
             # Ensure that we avoid certain problematic extensions and always use some defaults.
             specified_extensions = super().compute_value(raw_value, address)
-            banned = [
+            if banned := [
                 extension
                 for extension in specified_extensions
                 if extension in cls.banned_extensions
-            ]
-            if banned:
+            ]:
                 raise InvalidFieldException(
                     f"The {repr(cls.alias)} field in target {address} is using banned "
                     f"extensions: {banned}"
                 )
             return (*specified_extensions, *cls.default_extensions)
+
 
     class CustomFortranTarget(Target):
         alias = "custom_fortran"

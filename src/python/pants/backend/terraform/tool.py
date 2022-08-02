@@ -22,7 +22,7 @@ class TerraformTool(TemplatedExternalTool):
     }
 
     @classproperty
-    def default_known_versions(cls):
+    def default_known_versions(self):
         return [
             "0.14.5|macos_arm64 |363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07|34341379",
             "0.14.5|macos_x86_64|363d0e0c5c4cb4e69f5f2c7f64f9bf01ab73af0801665d577441521a24313a07|34341379",

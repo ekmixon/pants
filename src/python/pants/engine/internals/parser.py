@@ -80,6 +80,8 @@ class Parser:
         # file parse with a reset of the ParseState for the calling thread.
         parse_state = ParseState()
 
+
+
         class Registrar:
             def __init__(self, type_alias: str) -> None:
                 self._type_alias = type_alias
@@ -88,18 +90,19 @@ class Parser:
                 # Target names default to the name of the directory their BUILD file is in
                 # (as long as it's not the root directory).
                 if "name" not in kwargs:
-                    dirname = os.path.basename(parse_state.rel_path())
-                    if not dirname:
+                    if dirname := os.path.basename(parse_state.rel_path()):
+                        kwargs["name"] = dirname
+                    else:
                         raise UnaddressableObjectError(
                             "Targets in root-level BUILD files must be named explicitly."
                         )
-                    kwargs["name"] = dirname
                 target_adaptor = TargetAdaptor(self._type_alias, **kwargs)
                 parse_state.add(target_adaptor)
                 return target_adaptor
 
+
         symbols: dict[str, Any] = dict(object_aliases.objects)
-        symbols.update((alias, Registrar(alias)) for alias in target_type_aliases)
+        symbols |= ((alias, Registrar(alias)) for alias in target_type_aliases)
 
         parse_context = ParseContext(
             build_root=build_root, type_aliases=symbols, rel_path_oracle=parse_state
@@ -131,7 +134,7 @@ class Parser:
         try:
             exec(build_file_content, global_symbols)
         except NameError as e:
-            valid_symbols = sorted(s for s in global_symbols.keys() if s != "__builtins__")
+            valid_symbols = sorted(s for s in global_symbols if s != "__builtins__")
             original = e.args[0].capitalize()
             help_str = (
                 "If you expect to see more symbols activated in the below list,"
@@ -139,15 +142,14 @@ class Parser:
                 " backends to activate."
             )
 
-            candidates = get_close_matches(build_file_content, valid_symbols)
-            if candidates:
+            if candidates := get_close_matches(build_file_content, valid_symbols):
                 if len(candidates) == 1:
                     formatted_candidates = candidates[0]
                 elif len(candidates) == 2:
                     formatted_candidates = " or ".join(candidates)
                 else:
                     formatted_candidates = f"{', '.join(candidates[:-1])}, or {candidates[-1]}"
-                help_str = f"Did you mean {formatted_candidates}?\n\n" + help_str
+                help_str = f"Did you mean {formatted_candidates}?\n\n{help_str}"
             raise ParseError(
                 f"{original}.\n\n{help_str}\n\nAll registered symbols: {valid_symbols}"
             )
@@ -166,9 +168,9 @@ def error_on_imports(build_file_content: str, filepath: str) -> None:
     io_wrapped_python = StringIO(build_file_content)
     for token in tokenize.generate_tokens(io_wrapped_python.readline):
         token_str = token[1]
-        lineno, _ = token[2]
         if token_str != "import":
             continue
+        lineno, _ = token[2]
         raise ParseError(
             f"Import used in {filepath} at line {lineno}. Import statements are banned in "
             "BUILD files because they can easily break Pants caching and lead to stale results. "

@@ -138,10 +138,10 @@ async def determine_shunit2_shell(
         test=tgt_shell.binary_path_test,
     )
     paths = await Get(BinaryPaths, BinaryPathRequest, path_request)
-    first_path = paths.first_path
-    if not first_path:
+    if first_path := paths.first_path:
+        return Shunit2Runner(tgt_shell, first_path)
+    else:
         raise BinaryNotFoundError(path_request, rationale=f"run shunit2 on {request.address}")
-    return Shunit2Runner(tgt_shell, first_path)
 
 
 @rule(desc="Setup shunit2", level=LogLevel.DEBUG)

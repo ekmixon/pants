@@ -160,8 +160,9 @@ async def infer_python_dependencies_via_imports(
             import_reference="module",
             context=f"The target {address} imports `{imp}`",
         )
-        maybe_disambiguated = explicitly_provided_deps.disambiguated(owners.ambiguous)
-        if maybe_disambiguated:
+        if maybe_disambiguated := explicitly_provided_deps.disambiguated(
+            owners.ambiguous
+        ):
             merged_result.add(maybe_disambiguated)
 
     return InferredDependencies(sorted(merged_result), sibling_dependencies_inferrable=True)

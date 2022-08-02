@@ -109,14 +109,13 @@ class Isort(PythonToolBase):
         check_content = {}
         for d in ("", *dirs):
             check_existence.append(os.path.join(d, ".isort.cfg"))
-            check_content.update(
-                {
-                    os.path.join(d, "pyproject.toml"): b"[tool.isort]",
-                    os.path.join(d, "setup.cfg"): b"[isort]",
-                    os.path.join(d, "tox.ini"): b"[isort]",
-                    os.path.join(d, ".editorconfig"): b"[*.py]",
-                }
-            )
+            check_content |= {
+                os.path.join(d, "pyproject.toml"): b"[tool.isort]",
+                os.path.join(d, "setup.cfg"): b"[isort]",
+                os.path.join(d, "tox.ini"): b"[isort]",
+                os.path.join(d, ".editorconfig"): b"[*.py]",
+            }
+
 
         return ConfigFilesRequest(
             specified=self.config,

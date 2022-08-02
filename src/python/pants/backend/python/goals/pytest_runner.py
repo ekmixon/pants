@@ -285,7 +285,7 @@ async def setup_pytest_for_target(
     coverage_args = []
     if test_subsystem.use_coverage and not request.is_debug:
         output_files.append(".coverage")
-        cov_paths = coverage_subsystem.filter if coverage_subsystem.filter else (".",)
+        cov_paths = coverage_subsystem.filter or (".",)
         coverage_args = [
             "--cov-report=",  # Turn off output.
             f"--cov-config={coverage_config.path}",

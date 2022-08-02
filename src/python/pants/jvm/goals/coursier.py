@@ -132,9 +132,9 @@ async def coursier_resolve_lockfiles(
         Get(CoursierGenerateLockfileResult, CoursierGenerateLockfileRequest(target=target))
         for target in jvm_lockfile_targets
     )
-    # For performance reasons, avoid writing out files to the workspace that haven't changed.
-    results_to_write = tuple(result for result in results if result.digest != EMPTY_DIGEST)
-    if results_to_write:
+    if results_to_write := tuple(
+        result for result in results if result.digest != EMPTY_DIGEST
+    ):
         merged_digest = await Get(
             Digest, MergeDigests(result.digest for result in results_to_write)
         )

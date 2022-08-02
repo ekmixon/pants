@@ -78,13 +78,13 @@ class Optionable(OptionableFactory, metaclass=ABCMeta):
     _scope_name_component_re = re.compile(r"^(?:[a-z0-9])+(?:-(?:[a-z0-9])+)*$")
 
     @classproperty
-    def optionable_cls(cls):
+    def optionable_cls(self):
         # Fills the `OptionableFactory` contract.
-        return cls
+        return self
 
     @classmethod
     def is_valid_scope_name_component(cls, s: str) -> bool:
-        return s == "" or cls._scope_name_component_re.match(s) is not None
+        return not s or cls._scope_name_component_re.match(s) is not None
 
     @classmethod
     def validate_scope_name_component(cls, s: str) -> None:

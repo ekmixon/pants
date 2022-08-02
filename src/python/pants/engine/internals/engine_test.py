@@ -279,12 +279,10 @@ class WorkunitTracker(WorkunitsCallback):
         if kwargs["finished"] is True:
             self.finished = True
 
-        started_workunits = kwargs.get("started_workunits")
-        if started_workunits:
+        if started_workunits := kwargs.get("started_workunits"):
             self.started_workunit_chunks.append(started_workunits)
 
-        completed_workunits = kwargs.get("completed_workunits")
-        if completed_workunits:
+        if completed_workunits := kwargs.get("completed_workunits"):
             self.finished_workunit_chunks.append(completed_workunits)
 
 
@@ -356,7 +354,7 @@ class StreamingWorkunitTests(unittest.TestCase, SchedulerTestBase):
         # Because of the artificial delay in rule_one, it should have time to be reported as
         # started but not yet finished.
         started = list(itertools.chain.from_iterable(tracker.started_workunit_chunks))
-        assert len(list(item for item in started if item["name"] == "canonical_rule_one")) > 0
+        assert [item for item in started if item["name"] == "canonical_rule_one"]
 
         assert {item["name"] for item in tracker.finished_workunit_chunks[1]} == {
             "canonical_rule_one"

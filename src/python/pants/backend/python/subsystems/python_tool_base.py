@@ -214,6 +214,8 @@ class PythonToolBase(PythonToolRequirementsBase):
             )
         if not is_default_console_script:
             return ConsoleScript(cast(str, self.options.console_script))
-        if not is_default_entry_point:
-            return EntryPoint.parse(cast(str, self.options.entry_point))
-        return self.default_main
+        return (
+            self.default_main
+            if is_default_entry_point
+            else EntryPoint.parse(cast(str, self.options.entry_point))
+        )

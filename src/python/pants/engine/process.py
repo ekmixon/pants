@@ -140,7 +140,7 @@ class MultiPlatformProcess:
     processes: Tuple[Process, ...]
 
     def __init__(self, request_dict: dict[Platform | None, Process]) -> None:
-        if len(request_dict) == 0:
+        if not request_dict:
             raise ValueError("At least one platform-constrained Process must be passed.")
         serialized_constraints = tuple(
             constraint.value if constraint else None for constraint in request_dict
@@ -489,10 +489,10 @@ async def find_bash(bash_request: BashBinaryRequest) -> BashBinary:
         test=BinaryPathTest(args=["--version"]),
     )
     paths = await Get(BinaryPaths, BinaryPathRequest, request)
-    first_path = paths.first_path
-    if not first_path:
+    if first_path := paths.first_path:
+        return BashBinary(first_path.path, first_path.fingerprint)
+    else:
         raise BinaryNotFoundError(request, rationale=bash_request.rationale)
-    return BashBinary(first_path.path, first_path.fingerprint)
 
 
 @rule

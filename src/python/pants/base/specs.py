@@ -111,13 +111,15 @@ class SiblingAddresses(MaybeEmptySiblingAddresses):
     def matching_address_families(
         self, address_families_dict: Mapping[str, "AddressFamily"]
     ) -> Tuple["AddressFamily", ...]:
-        address_families_tuple = super().matching_address_families(address_families_dict)
-        if not address_families_tuple:
+        if address_families_tuple := super().matching_address_families(
+            address_families_dict
+        ):
+            return address_families_tuple
+        else:
             raise ResolveError(
                 f"Path '{self.directory}' does not contain any BUILD files, but '{self}' expected "
                 "matching targets there."
             )
-        return address_families_tuple
 
     def matching_addresses(
         self, address_families: Sequence["AddressFamily"]

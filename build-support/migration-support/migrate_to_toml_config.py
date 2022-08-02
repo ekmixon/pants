@@ -54,9 +54,9 @@ def create_parser() -> argparse.ArgumentParser:
 
 
 def update_primitive_value(original: str) -> str:
-    if original in ["true", "True"]:
+    if original in {"true", "True"}:
         return "true"
-    if original in ["false", "False"]:
+    if original in {"false", "False"}:
         return "false"
 
     try:
@@ -77,22 +77,23 @@ def generate_new_config(config: Path) -> List[str]:
     original_text_lines = original_text.splitlines()
     updated_text_lines = original_text_lines.copy()
 
+    option_regex = r"(?P<option>[a-zA-Z0-9_]+)"
+    valid_value_characters = r"a-zA-Z0-9_.@!:%\*\=\>\<\-\(\)\/"
     for i, line in enumerate(original_text_lines):
-        option_regex = r"(?P<option>[a-zA-Z0-9_]+)"
         before_value_regex = rf"\s*{option_regex}\s*[:=]\s*"
-        valid_value_characters = r"a-zA-Z0-9_.@!:%\*\=\>\<\-\(\)\/"
         value_regex = rf"(?P<value>[{valid_value_characters}]+)"
-        parsed_line = re.match(rf"{before_value_regex}{value_regex}\s*$", line)
-
-        if parsed_line:
+        if parsed_line := re.match(
+            rf"{before_value_regex}{value_regex}\s*$", line
+        ):
             option, value = parsed_line.groups()
             updated_text_lines[i] = f"{option} = {update_primitive_value(value)}"
             continue
 
         # Check if it's a one-line list value
         list_value_regex = rf"(?P<list>[\+\-]?\[[{valid_value_characters},\s\'\"]*\])"
-        parsed_list_line = re.match(rf"{before_value_regex}{list_value_regex}\s*$", line)
-        if parsed_list_line:
+        if parsed_list_line := re.match(
+            rf"{before_value_regex}{list_value_regex}\s*$", line
+        ):
             option, value = parsed_list_line.groups()
             if value.startswith("+"):
                 updated_line = f"{option}.add = {value[1:]}"
@@ -105,12 +106,11 @@ def generate_new_config(config: Path) -> List[str]:
 
         # Check if it's a one-line dict value
         dict_value_regex = rf"(?P<dict>{{[{valid_value_characters},:\s\'\"]*}})"
-        parsed_dict_line = re.match(rf"{before_value_regex}{dict_value_regex}\s*$", line)
-        if parsed_dict_line:
+        if parsed_dict_line := re.match(
+            rf"{before_value_regex}{dict_value_regex}\s*$", line
+        ):
             option, value = parsed_dict_line.groups()
             updated_text_lines[i] = f'{option} = """{value}"""'
-            continue
-
     return updated_text_lines
 
 

@@ -114,10 +114,10 @@ class DocUrlMatcher:
         self._doc_url_re = re.compile(_doc_url_pattern)
 
     def slug_for_url(self, url: str) -> str:
-        mo = self._doc_url_re.match(url)
-        if not mo:
+        if mo := self._doc_url_re.match(url):
+            return cast(str, mo.group("slug"))
+        else:
             raise ValueError(f"Not a docsite URL: {url}")
-        return cast(str, mo.group("slug"))
 
     def find_doc_urls(self, strs: Iterable[str]) -> set[str]:
         """Find all the docsite urls in the given strings."""
@@ -132,11 +132,11 @@ class DocUrlRewriter:
     def _rewrite_url(self, mo: re.Match) -> str:
         # The docsite injects the version automatically at markdown rendering time, so we
         # must not also do so, or it will be doubled, and the resulting links will be broken.
-        slug = mo.group("slug")
-        title = self._slug_to_title.get(slug)
-        if not title:
-            raise ValueError(f"Found empty or no title for {mo.group(0)}")
-        return f"[{title}](doc:{slug})"
+        slug = mo["slug"]
+        if title := self._slug_to_title.get(slug):
+            return f"[{title}](doc:{slug})"
+        else:
+            raise ValueError(f"Found empty or no title for {mo[0]}")
 
     def rewrite(self, s: str) -> str:
         return self._doc_url_re.sub(self._rewrite_url, s)
@@ -181,12 +181,7 @@ def get_titles(urls: set[str]) -> dict[str, str]:
     """Return map from slug->title for each given docsite URL."""
 
     matcher = DocUrlMatcher()
-    # TODO: Parallelize the http requests.
-    #  E.g., by turning generate_docs.py into a plugin goal and using the engine.
-    ret = {}
-    for url in urls:
-        ret[matcher.slug_for_url(url)] = get_title(url)
-    return ret
+    return {matcher.slug_for_url(url): get_title(url) for url in urls}
 
 
 def create_parser() -> argparse.ArgumentParser:
@@ -246,15 +241,12 @@ def value_strs_iter(help_info: dict) -> Iterable[str]:
             yield val
         if isinstance(val, dict):
             for v in val.values():
-                for x in _recurse(v):
-                    yield x
+                yield from _recurse(v)
         if isinstance(val, list):
             for v in val:
-                for x in _recurse(v):
-                    yield x
+                yield from _recurse(v)
 
-    for x in _recurse(help_info):
-        yield x
+    yield from _recurse(help_info)
 
 
 def rewrite_value_strs(help_info: dict, slug_to_title: dict[str, str]) -> dict:
@@ -266,9 +258,7 @@ def rewrite_value_strs(help_info: dict, slug_to_title: dict[str, str]) -> dict:
             return rewriter.rewrite(val)
         if isinstance(val, dict):
             return {k: _recurse(v) for k, v in val.items()}
-        if isinstance(val, list):
-            return [_recurse(x) for x in val]
-        return val
+        return [_recurse(x) for x in val] if isinstance(val, list) else val
 
     return cast(dict, _recurse(help_info))
 

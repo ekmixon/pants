@@ -165,8 +165,9 @@ async def resolve_targets(targets: UnexpandedTargets) -> Targets:
     expanded_targets.update(
         target
         for subtargets in build_targets_subtargets
-        for target in (subtargets.subtargets if subtargets.subtargets else (subtargets.base,))
+        for target in subtargets.subtargets or (subtargets.base,)
     )
+
     return Targets(expanded_targets)
 
 
@@ -295,12 +296,11 @@ async def transitive_dependency_mapping(request: _DependencyMappingRequest) -> _
                 for tgt in queued
             )
 
-        dependency_mapping.update(
-            zip(
-                (t.address for t in queued),
-                (tuple(t.address for t in deps) for deps in direct_dependencies),
-            )
+        dependency_mapping |= zip(
+            (t.address for t in queued),
+            (tuple(t.address for t in deps) for deps in direct_dependencies),
         )
+
 
         queued = FrozenOrderedSet(itertools.chain.from_iterable(direct_dependencies)).difference(
             visited
@@ -335,8 +335,9 @@ async def transitive_targets(request: TransitiveTargetsRequest) -> TransitiveTar
             for unparsed in unevaluated_transitive_excludes
         )
         transitive_excludes = FrozenOrderedSet(
-            itertools.chain.from_iterable(excludes for excludes in nested_transitive_excludes)
+            itertools.chain.from_iterable(iter(nested_transitive_excludes))
         )
+
 
     return TransitiveTargets(
         tuple(dependency_mapping.roots_as_targets),
@@ -372,7 +373,10 @@ async def coarsened_targets(addresses: Addresses) -> CoarsenedTargets:
     }
     targets = []
     for component in components:
-        if not any(component_address in addresses_set for component_address in component):
+        if all(
+            component_address not in addresses_set
+            for component_address in component
+        ):
             continue
         component_set = set(component)
         members = tuple(addresses_to_targets[a] for a in component)
@@ -619,8 +623,10 @@ class AmbiguousCodegenImplementationsException(Exception):
     ) -> None:
         bulleted_list_sep = "\n  * "
         all_same_generator_paths = (
-            len(set((generator.input, generator.output) for generator in generators)) == 1
+            len({(generator.input, generator.output) for generator in generators})
+            == 1
         )
+
         example_generator = list(generators)[0]
         input = example_generator.input.__name__
         if all_same_generator_paths:
@@ -1073,10 +1079,11 @@ async def find_valid_field_sets_for_target_roots(
     field_sets_per_target = await Get(
         FieldSetsPerTarget, FieldSetsPerTargetRequest(request.field_set_superclass, targets)
     )
-    targets_to_applicable_field_sets = {}
-    for tgt, field_sets in zip(targets, field_sets_per_target.collection):
-        if field_sets:
-            targets_to_applicable_field_sets[tgt] = field_sets
+    targets_to_applicable_field_sets = {
+        tgt: field_sets
+        for tgt, field_sets in zip(targets, field_sets_per_target.collection)
+        if field_sets
+    }
 
     # Possibly warn or error if no targets were applicable.
     if not targets_to_applicable_field_sets:

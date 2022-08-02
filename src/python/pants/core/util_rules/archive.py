@@ -74,10 +74,10 @@ async def find_zip() -> ZipBinary:
         binary_name="zip", search_path=SEARCH_PATHS, test=BinaryPathTest(args=["-v"])
     )
     paths = await Get(BinaryPaths, BinaryPathRequest, request)
-    first_path = paths.first_path
-    if not first_path:
+    if first_path := paths.first_path:
+        return ZipBinary(first_path.path, first_path.fingerprint)
+    else:
         raise BinaryNotFoundError(request, rationale="create `.zip` archives")
-    return ZipBinary(first_path.path, first_path.fingerprint)
 
 
 @rule(desc="Finding the `unzip` binary", level=LogLevel.DEBUG)
@@ -86,10 +86,10 @@ async def find_unzip() -> UnzipBinary:
         binary_name="unzip", search_path=SEARCH_PATHS, test=BinaryPathTest(args=["-v"])
     )
     paths = await Get(BinaryPaths, BinaryPathRequest, request)
-    first_path = paths.first_path
-    if not first_path:
+    if first_path := paths.first_path:
+        return UnzipBinary(first_path.path, first_path.fingerprint)
+    else:
         raise BinaryNotFoundError(request, rationale="download the tools Pants needs to run")
-    return UnzipBinary(first_path.path, first_path.fingerprint)
 
 
 @rule(desc="Finding the `tar` binary", level=LogLevel.DEBUG)
@@ -98,10 +98,10 @@ async def find_tar() -> TarBinary:
         binary_name="tar", search_path=SEARCH_PATHS, test=BinaryPathTest(args=["--version"])
     )
     paths = await Get(BinaryPaths, BinaryPathRequest, request)
-    first_path = paths.first_path
-    if not first_path:
+    if first_path := paths.first_path:
+        return TarBinary(first_path.path, first_path.fingerprint)
+    else:
         raise BinaryNotFoundError(request, rationale="download the tools Pants needs to run")
-    return TarBinary(first_path.path, first_path.fingerprint)
 
 
 # -----------------------------------------------------------------------------------------------

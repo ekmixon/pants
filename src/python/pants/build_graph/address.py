@@ -36,11 +36,12 @@ class AddressInput:
     target_component: Optional[str] = None
 
     def __post_init__(self):
-        if self.target_component is not None or self.path_component == "":
-            if not self.target_component:
-                raise InvalidTargetName(
-                    f"Address spec {self.path_component}:{self.target_component} has no name part."
-                )
+        if (
+            self.target_component is not None or self.path_component == ""
+        ) and not self.target_component:
+            raise InvalidTargetName(
+                f"Address spec {self.path_component}:{self.target_component} has no name part."
+            )
 
         # A root is okay.
         if self.path_component == "":
@@ -232,8 +233,7 @@ class Address(EngineAwareParameter):
         # If the target_name is the same as the default name would be, we normalize to None.
         self._target_name: Optional[str]
         if target_name and target_name != os.path.basename(self.spec_path):
-            banned_chars = BANNED_CHARS_IN_TARGET_NAME & set(target_name)
-            if banned_chars:
+            if banned_chars := BANNED_CHARS_IN_TARGET_NAME & set(target_name):
                 raise InvalidTargetName(
                     f"The target name {target_name} (defined in directory {self.spec_path}) "
                     f"contains banned characters (`{'`,`'.join(banned_chars)}`). Please replace "
@@ -284,7 +284,7 @@ class Address(EngineAwareParameter):
 
         :API: public
         """
-        prefix = "//" if not self.spec_path else ""
+        prefix = "" if self.spec_path else "//"
         file_portion = f"{prefix}{self.spec_path}"
         if self._relative_file_path is not None:
             file_portion = os.path.join(file_portion, self._relative_file_path)
@@ -322,17 +322,25 @@ class Address(EngineAwareParameter):
 
         Otherwise, return itself unmodified.
         """
-        if not self.is_file_target:
-            return self
-        return self.__class__(self.spec_path, relative_file_path=None, target_name=self.target_name)
+        return (
+            self.__class__(
+                self.spec_path,
+                relative_file_path=None,
+                target_name=self.target_name,
+            )
+            if self.is_file_target
+            else self
+        )
 
     def __eq__(self, other):
-        if not isinstance(other, Address):
-            return False
         return (
-            self.spec_path == other.spec_path
-            and self._relative_file_path == other._relative_file_path
-            and self._target_name == other._target_name
+            (
+                self.spec_path == other.spec_path
+                and self._relative_file_path == other._relative_file_path
+                and self._target_name == other._target_name
+            )
+            if isinstance(other, Address)
+            else False
         )
 
     def __hash__(self):

@@ -277,9 +277,7 @@ class EngineInitializer:
             return Path(v).resolve().as_posix()
 
         def ensure_optional_absolute_path(v: Optional[str]) -> Optional[str]:
-            if v is None:
-                return None
-            return ensure_absolute_path(v)
+            return None if v is None else ensure_absolute_path(v)
 
         scheduler = Scheduler(
             ignore_patterns=pants_ignore_patterns,

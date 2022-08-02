@@ -21,8 +21,7 @@ def main() -> None:
     files = itertools.chain.from_iterable(
         [Path().glob(f"{d}/**/__init__.py") for d in DIRS_TO_CHECK]
     )
-    non_empty_inits = [f for f in files if bool(f.read_text())]
-    if non_empty_inits:
+    if non_empty_inits := [f for f in files if bool(f.read_text())]:
         die(
             "All `__init__.py` file should be empty, but the following had content: "
             f"{', '.join(str(f) for f in non_empty_inits)}"

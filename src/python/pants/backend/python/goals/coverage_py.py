@@ -257,7 +257,7 @@ def _validate_and_update_config(
             f"file {config_path}"
         )
     coverage_config.set("run", "relative_files", "True")
-    omit_elements = [em for em in run_section.get("omit", "").split("\n")] or ["\n"]
+    omit_elements = list(run_section.get("omit", "").split("\n")) or ["\n"]
     if "pytest.pex/*" not in omit_elements:
         omit_elements.append("pytest.pex/*")
     run_section["omit"] = "\n".join(omit_elements)
@@ -379,12 +379,16 @@ async def merge_coverage_data(
                     "coverage": {
                         "run": {
                             "relative_files": True,
-                            "source": list(source_root.path for source_root in source_roots),
+                            "source": [
+                                source_root.path
+                                for source_root in source_roots
+                            ],
                         }
                     }
                 }
             }
         ).encode()
+
 
         no_op_exe_py_path = global_coverage_base_dir / "no-op-exe.py"
 

@@ -113,8 +113,9 @@ def build_package(
         "", f"go_binary(name='bin', binary_name='foo', main='{main_target.address.spec}')\n"
     )
     go_binary_target = rule_runner.get_target(Address("", target_name="bin"))
-    built_package = rule_runner.request(BuiltPackage, (GoBinaryFieldSet.create(go_binary_target),))
-    return built_package
+    return rule_runner.request(
+        BuiltPackage, (GoBinaryFieldSet.create(go_binary_target),)
+    )
 
 
 def test_package_one_target(rule_runner: RuleRunner) -> None:

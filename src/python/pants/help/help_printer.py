@@ -47,8 +47,11 @@ class HelpPrinter(MaybeColor):
         """Print help to the console."""
 
         def print_hint() -> None:
-            print(f"Use `{self.maybe_green(self._bin_name + ' help')}` to get help.")
-            print(f"Use `{self.maybe_green(self._bin_name + ' help goals')}` to list goals.")
+            print(f"Use `{self.maybe_green(f'{self._bin_name} help')}` to get help.")
+            print(
+                f"Use `{self.maybe_green(f'{self._bin_name} help goals')}` to list goals."
+            )
+
 
         if isinstance(self._help_request, VersionHelp):
             print(pants_version())
@@ -95,9 +98,7 @@ class HelpPrinter(MaybeColor):
         Note: Ony useful if called after options have been registered.
         """
         help_request = cast(ThingHelp, self._help_request)
-        things = set(help_request.things)
-
-        if things:
+        if things := set(help_request.things):
             for thing in sorted(things):
                 if thing == "goals":
                     self._print_all_goals()
@@ -134,7 +135,7 @@ class HelpPrinter(MaybeColor):
 
         self._print_title("Goals")
 
-        max_width = max((len(name) for name in goal_descriptions.keys()), default=0)
+        max_width = max((len(name) for name in goal_descriptions), default=0)
         chars_before_description = max_width + 2
 
         def format_goal(name: str, descr: str) -> str:
@@ -150,12 +151,13 @@ class HelpPrinter(MaybeColor):
     def _print_all_subsystems(self) -> None:
         self._print_title("Subsystems")
 
-        subsystem_description: Dict[str, str] = {}
-        for alias, help_info in self._all_help_info.scope_to_help_info.items():
-            if not help_info.is_goal and alias:
-                subsystem_description[alias] = first_paragraph(help_info.description)
+        subsystem_description: Dict[str, str] = {
+            alias: first_paragraph(help_info.description)
+            for alias, help_info in self._all_help_info.scope_to_help_info.items()
+            if not help_info.is_goal and alias
+        }
 
-        longest_subsystem_alias = max(len(alias) for alias in subsystem_description.keys())
+        longest_subsystem_alias = max(len(alias) for alias in subsystem_description)
         chars_before_description = longest_subsystem_alias + 2
         for alias, description in sorted(subsystem_description.items()):
             alias = self.maybe_cyan(alias.ljust(chars_before_description))
@@ -248,10 +250,10 @@ class HelpPrinter(MaybeColor):
         if not oshi:
             return
         formatted_lines = help_formatter.format_options(oshi)
-        goal_info = self._all_help_info.name_to_goal_info.get(scope)
-        if goal_info:
-            related_scopes = sorted(set(goal_info.consumed_scopes) - {GLOBAL_SCOPE, goal_info.name})
-            if related_scopes:
+        if goal_info := self._all_help_info.name_to_goal_info.get(scope):
+            if related_scopes := sorted(
+                set(goal_info.consumed_scopes) - {GLOBAL_SCOPE, goal_info.name}
+            ):
                 related_subsystems_label = self.maybe_green("Related subsystems:")
                 formatted_lines.append(f"{related_subsystems_label} {', '.join(related_scopes)}")
                 formatted_lines.append("")

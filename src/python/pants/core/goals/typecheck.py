@@ -80,7 +80,7 @@ class TypecheckResults:
 
     @property
     def skipped(self) -> bool:
-        return bool(self.results) is False
+        return not bool(self.results)
 
     @memoized_property
     def exit_code(self) -> int:

@@ -158,12 +158,11 @@ class PathGlobs:
                     "`glob_match_error_behavior` to `warn` or `error`, or remove "
                     "`description_of_origin`."
                 )
-        else:
-            if not self.description_of_origin:
-                raise ValueError(
-                    "Please provide a `description_of_origin` so that the error message is more "
-                    "helpful to users when their globs fail to match."
-                )
+        elif not self.description_of_origin:
+            raise ValueError(
+                "Please provide a `description_of_origin` so that the error message is more "
+                "helpful to users when their globs fail to match."
+            )
 
 
 @dataclass(frozen=True)

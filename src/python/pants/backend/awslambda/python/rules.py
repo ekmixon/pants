@@ -101,12 +101,9 @@ async def package_python_awslambda(
         Get(TransitiveTargets, TransitiveTargetsRequest([field_set.address])),
     )
 
-    # Warn if users depend on `files` targets, which won't be included in the PEX and is a common
-    # gotcha.
-    files_tgts = targets_with_sources_types(
+    if files_tgts := targets_with_sources_types(
         [FilesSources], transitive_targets.dependencies, union_membership
-    )
-    if files_tgts:
+    ):
         files_addresses = sorted(tgt.address.spec for tgt in files_tgts)
         logger.warning(
             f"The python_awslambda target {field_set.address} transitively depends on the below "

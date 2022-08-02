@@ -24,15 +24,13 @@ def lifecycle_stub_cmdline() -> List[str]:
         get_buildroot(), "testprojects/pants-plugins/src/python"
     )
     testproject_backend_pkg_name = "test_pants_plugin"
-    lifecycle_stub_cmdline = [
+    return [
         "--no-pantsd",
         f"--pythonpath=+['{testproject_backend_src_dir}']",
         f"--backend-packages=+['{testproject_backend_pkg_name}']",
         # This task will always raise an exception.
         "lifecycle-stub-goal",
     ]
-
-    return lifecycle_stub_cmdline
 
 
 def get_log_file_paths(workdir: str, pid: int) -> Tuple[str, str]:

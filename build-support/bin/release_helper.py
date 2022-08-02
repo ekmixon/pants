@@ -681,12 +681,15 @@ def publish_apple_silicon() -> None:
 
 def check_clean_git_branch() -> None:
     banner("Checking for a clean Git branch")
-    git_status = (
-        subprocess.run(["git", "status", "--porcelain"], stdout=subprocess.PIPE, check=True)
+    if git_status := (
+        subprocess.run(
+            ["git", "status", "--porcelain"],
+            stdout=subprocess.PIPE,
+            check=True,
+        )
         .stdout.decode()
         .strip()
-    )
-    if git_status:
+    ):
         die(
             "Uncommitted changes detected when running `git status`. You must be on a clean branch "
             "to release."

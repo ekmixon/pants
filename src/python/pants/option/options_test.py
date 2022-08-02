@@ -1061,7 +1061,7 @@ class OptionsTest(unittest.TestCase):
 
         default = {"a": "b"}
         specified_args = {"c": "d"}
-        all_args = {**default, **specified_args}
+        all_args = default | specified_args
 
         check(expected=default)
 
@@ -1704,7 +1704,7 @@ class OptionsTest(unittest.TestCase):
         with temporary_file(suffix=".json", binary_mode=False) as fp:
             json.dump(val, fp)
             fp.close()
-            options = self._parse(flags=f"fromfile --{'dictvalue'}=@{fp.name}")
+            options = self._parse(flags=f"fromfile --dictvalue=@{fp.name}")
             self.assertEqual(val, options.for_scope("fromfile")["dictvalue"])
 
     def test_fromfile_yaml(self) -> None:
@@ -1712,7 +1712,7 @@ class OptionsTest(unittest.TestCase):
         with temporary_file(suffix=".yaml", binary_mode=False) as fp:
             yaml.safe_dump(val, fp)
             fp.close()
-            options = self._parse(flags=f"fromfile --{'dictvalue'}=@{fp.name}")
+            options = self._parse(flags=f"fromfile --dictvalue=@{fp.name}")
             self.assertEqual(val, options.for_scope("fromfile")["dictvalue"])
 
     def test_fromfile_error(self) -> None:

@@ -41,8 +41,7 @@ def filter_files(files: Iterable[str], *, snippet_regex: str) -> Set[str]:
 def check_banned_import(
     files: Iterable[str], *, bad_import_regex: str, correct_import_message: str
 ) -> None:
-    bad_files = filter_files(files, snippet_regex=bad_import_regex)
-    if bad_files:
+    if bad_files := filter_files(files, snippet_regex=bad_import_regex):
         bad_files_str = "\n".join(sorted(bad_files))
         die(
             f"Found forbidden imports matching `{bad_import_regex}`. Instead, you should use "

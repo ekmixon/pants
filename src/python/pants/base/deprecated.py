@@ -237,7 +237,7 @@ def resolve_conflicting_options(
     if old_configured and new_configured:
 
         def format_option(*, scope: str, option: str) -> str:
-            scope_preamble = "--" if scope == "" else f"--{scope}-"
+            scope_preamble = f"--{scope}-" if scope else "--"
             return f"`{scope_preamble}{option}`".replace("_", "-")
 
         old_display = format_option(scope=old_scope, option=old_option)

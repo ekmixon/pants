@@ -112,7 +112,7 @@ class DaemonPantsRunner:
             logger.debug("Connected to pantsd")
             # Capture the client's start time, which we propagate here in order to get an accurate
             # view of total time.
-            env_start_time = env.get("PANTSD_RUNTRACKER_CLIENT_START_TIME", None)
+            env_start_time = env.get("PANTSD_RUNTRACKER_CLIENT_START_TIME")
             start_time = float(env_start_time) if env_start_time else time.time()
 
             options_bootstrapper = OptionsBootstrapper.create(

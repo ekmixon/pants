@@ -151,7 +151,7 @@ class NailgunProtocol:
         if isinstance(payload, str):
             payload = payload.encode(encoding)
         elif not isinstance(payload, bytes):
-            raise TypeError("cannot encode type: {}".format(type(payload)))
+            raise TypeError(f"cannot encode type: {type(payload)}")
 
         header = struct.pack(cls.HEADER_FMT, len(payload), chunk_type)
         return header + payload
@@ -161,14 +161,13 @@ class NailgunProtocol:
         """Read a certain amount of content from a socket before returning."""
         buf = b""
         while len(buf) < desired_size:
-            recv_bytes = sock.recv(desired_size - len(buf))
-            if not recv_bytes:
+            if recv_bytes := sock.recv(desired_size - len(buf)):
+                buf += recv_bytes
+            else:
                 raise cls.TruncatedRead(
-                    "Expected {} bytes before socket shutdown, instead received {}".format(
-                        desired_size, len(buf)
-                    )
+                    f"Expected {desired_size} bytes before socket shutdown, instead received {len(buf)}"
                 )
-            buf += recv_bytes
+
         return buf
 
     @classmethod
@@ -203,7 +202,7 @@ class NailgunProtocol:
         # In the case we get an otherwise well-formed chunk, check the chunk_type for validity _after_
         # we've drained the payload from the socket to avoid subsequent reads of a stale payload.
         if chunk_type not in ChunkType.VALID_TYPES:
-            raise cls.ProtocolError("invalid chunk type: {}".format(chunk_type))
+            raise cls.ProtocolError(f"invalid chunk type: {chunk_type}")
         if not return_bytes:
             payload = payload.decode()
 
@@ -226,7 +225,7 @@ class NailgunProtocol:
                 sock.settimeout(timeout)
             yield
         except socket.timeout:
-            raise cls.ProcessStreamTimeout("socket read timed out with timeout {}".format(timeout))
+            raise cls.ProcessStreamTimeout(f"socket read timed out with timeout {timeout}")
         finally:
             if timeout is not None:
                 sock.settimeout(prev_timeout)
@@ -263,21 +262,16 @@ class NailgunProtocol:
             deadline = None
         else:
             options = timeout_object.maybe_timeout_options()
-            if options is None:
-                deadline = None
-            else:
-                deadline = options.start_time + options.interval
-
+            deadline = None if options is None else options.start_time + options.interval
         while 1:
             if deadline is not None:
                 overtime_seconds = deadline - time.time()
                 if overtime_seconds > 0:
                     original_timestamp = datetime.datetime.fromtimestamp(deadline).isoformat()
                     raise cls.ProcessStreamTimeout(
-                        "iterating over bytes from nailgun timed out at {}, overtime seconds: {}".format(
-                            original_timestamp, overtime_seconds
-                        )
+                        f"iterating over bytes from nailgun timed out at {original_timestamp}, overtime seconds: {overtime_seconds}"
                     )
+
 
             with maybe_shutdown_socket.lock:
                 if maybe_shutdown_socket.is_shutdown:
@@ -333,10 +327,9 @@ class NailgunProtocol:
         """
         if not isinstance(obj, int):
             raise TypeError(
-                "cannot encode non-integer object in encode_int(): object was {} (type '{}').".format(
-                    obj, type(obj)
-                )
+                f"cannot encode non-integer object in encode_int(): object was {obj} (type '{type(obj)}')."
             )
+
         return str(obj).encode("ascii")
 
     @classmethod

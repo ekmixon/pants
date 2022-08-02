@@ -151,11 +151,15 @@ def run_test_rule(
     )
 
     def mock_find_valid_field_sets(
-        _: TargetRootsToFieldSetsRequest,
-    ) -> TargetRootsToFieldSets:
-        if not valid_targets:
-            return TargetRootsToFieldSets({})
-        return TargetRootsToFieldSets({tgt: [field_set.create(tgt)] for tgt in targets})
+            _: TargetRootsToFieldSetsRequest,
+        ) -> TargetRootsToFieldSets:
+        return (
+            TargetRootsToFieldSets(
+                {tgt: [field_set.create(tgt)] for tgt in targets}
+            )
+            if valid_targets
+            else TargetRootsToFieldSets({})
+        )
 
     def mock_debug_request(_: TestFieldSet) -> TestDebugRequest:
         digest = rule_runner.request(

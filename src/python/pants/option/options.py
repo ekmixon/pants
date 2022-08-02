@@ -90,10 +90,9 @@ class Options:
             ret.add(si)
             if si.scope in original_scopes:
                 raise cls.DuplicateScopeError(
-                    "Scope `{}` claimed by {}, was also claimed by {}.".format(
-                        si.scope, si, original_scopes[si.scope]
-                    )
+                    f"Scope `{si.scope}` claimed by {si}, was also claimed by {original_scopes[si.scope]}."
                 )
+
             original_scopes[si.scope] = si
             if si.deprecated_scope:
                 ret.add(ScopeInfo(si.deprecated_scope, si.optionable_cls))
@@ -142,8 +141,7 @@ class Options:
             )
 
         if bootstrap_option_values:
-            spec_files = bootstrap_option_values.spec_files
-            if spec_files:
+            if spec_files := bootstrap_option_values.spec_files:
                 for spec_file in spec_files:
                     with open(spec_file, "r") as f:
                         split_args.specs.extend(
@@ -248,7 +246,6 @@ class Options:
                     valid_options_under_scope = set(
                         self.for_scope(scope, inherit_from_enclosing_scope=False)
                     )
-                # Only catch ConfigValidationError. Other exceptions will be raised directly.
                 except Config.ConfigValidationError:
                     error_log.append(f"Invalid scope [{section}] in {config.config_path}")
                 else:
@@ -256,11 +253,11 @@ class Options:
                     all_options_under_scope = set(config.values.options(section)) - set(
                         config.values.defaults
                     )
-                    for option in sorted(all_options_under_scope):
-                        if option not in valid_options_under_scope:
-                            error_log.append(
-                                f"Invalid option '{option}' under [{section}] in {config.config_path}"
-                            )
+                    error_log.extend(
+                        f"Invalid option '{option}' under [{section}] in {config.config_path}"
+                        for option in sorted(all_options_under_scope)
+                        if option not in valid_options_under_scope
+                    )
 
         if error_log:
             for error in error_log:
@@ -305,8 +302,7 @@ class Options:
         """Register an option in the given scope."""
         self._assert_not_frozen()
         self.get_parser(scope).register(*args, **kwargs)
-        deprecated_scope = self.known_scope_to_info[scope].deprecated_scope
-        if deprecated_scope:
+        if deprecated_scope := self.known_scope_to_info[scope].deprecated_scope:
             self.get_parser(deprecated_scope).register(*args, **kwargs)
 
     def registration_function_for_optionable(self, optionable_class):
@@ -349,10 +345,9 @@ class Options:
 
         # If this Scope is itself deprecated, report that.
         if si.removal_version:
-            explicit_keys = self.for_scope(
+            if explicit_keys := self.for_scope(
                 scope, inherit_from_enclosing_scope=False
-            ).get_explicit_keys()
-            if explicit_keys:
+            ).get_explicit_keys():
                 warn_or_error(
                     removal_version=si.removal_version,
                     entity=f"scope {scope}",
@@ -365,12 +360,9 @@ class Options:
         # check that scope != deprecated_scope to prevent infinite recursion.
         deprecated_scope = si.deprecated_scope
         if deprecated_scope is not None and scope != deprecated_scope:
-            # Do the deprecation check only on keys that were explicitly set on the deprecated scope
-            # (and not on its enclosing scopes).
-            explicit_keys = self.for_scope(
+            if explicit_keys := self.for_scope(
                 deprecated_scope, inherit_from_enclosing_scope=False
-            ).get_explicit_keys()
-            if explicit_keys:
+            ).get_explicit_keys():
                 # Update our values with those of the deprecated scope (now including values inherited
                 # from its enclosing scope).
                 # Note that a deprecated val will take precedence over a val of equal rank.
@@ -450,7 +442,7 @@ class Options:
         :API: public
         """
 
-        fingerprint_default = bool(invert)
+        fingerprint_default = invert
         pairs = []
 
         # Note that we iterate over options registered at `bottom_scope` and at all

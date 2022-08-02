@@ -73,12 +73,11 @@ class OptionsBootstrapper:
                 path_list_values.append(ListValueComponent.create(env[var]))
                 break
 
-        for arg in args:
-            # Technically this is very slightly incorrect, as we don't check scope.  But it's
-            # very unlikely that any task or subsystem will have an option named --pants-config-files.
-            # TODO: Enforce a ban on options with a --pants- prefix outside our global options?
-            if arg.startswith(flag):
-                path_list_values.append(ListValueComponent.create(arg[len(flag) :]))
+        path_list_values.extend(
+            ListValueComponent.create(arg[len(flag) :])
+            for arg in args
+            if arg.startswith(flag)
+        )
 
         return ListValueComponent.merge(path_list_values).val
 

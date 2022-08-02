@@ -33,16 +33,15 @@ async def find_putative_targets(
     all_terraform_files = await Get(Paths, PathGlobs, request.search_paths.path_globs("*.tf"))
     unowned_terraform_files = set(all_terraform_files.files) - set(all_owned_sources)
 
-    putative_targets = []
-    for dirname, filenames in group_by_dir(unowned_terraform_files).items():
-        putative_targets.append(
-            PutativeTarget.for_target_type(
-                TerraformModule,
-                dirname,
-                os.path.basename(dirname),
-                sorted(filenames),
-            )
+    putative_targets = [
+        PutativeTarget.for_target_type(
+            TerraformModule,
+            dirname,
+            os.path.basename(dirname),
+            sorted(filenames),
         )
+        for dirname, filenames in group_by_dir(unowned_terraform_files).items()
+    ]
 
     return PutativeTargets(putative_targets)
 

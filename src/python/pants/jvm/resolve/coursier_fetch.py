@@ -421,7 +421,7 @@ async def get_coursier_lockfile_for_target(
         for target in transitive_targets.closure
         if target.has_field(JvmLockfileSources)
     ]
-    if len(transitive_jvm_lockfile_sources) == 0:
+    if not transitive_jvm_lockfile_sources:
         raise CoursierError(
             "Exactly 1 target with a coursier_lockfile should appear in the transitive closure"
             " of a JVM target, but none were found."

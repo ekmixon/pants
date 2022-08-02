@@ -49,8 +49,9 @@ def test_resolve_go_module(rule_runner: RuleRunner) -> None:
     assert resolved_go_module.import_path == "go.example.com/foo"
     assert resolved_go_module.minimum_go_version == "1.16"
     assert len(resolved_go_module.modules) > 0
-    found_protobuf_module = False
-    for module_descriptor in resolved_go_module.modules:
-        if module_descriptor.module_path == "github.com/golang/protobuf":
-            found_protobuf_module = True
+    found_protobuf_module = any(
+        module_descriptor.module_path == "github.com/golang/protobuf"
+        for module_descriptor in resolved_go_module.modules
+    )
+
     assert found_protobuf_module

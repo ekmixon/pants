@@ -159,9 +159,14 @@ def _convert(val, acceptable_types):
 
 def _convert_list(val, member_type, is_enum):
     converted = _convert(val, (list, tuple))
-    if not is_enum:
-        return converted
-    return [item if isinstance(item, member_type) else member_type(item) for item in converted]
+    return (
+        [
+            item if isinstance(item, member_type) else member_type(item)
+            for item in converted
+        ]
+        if is_enum
+        else converted
+    )
 
 
 class ListValueComponent:

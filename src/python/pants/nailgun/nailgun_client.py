@@ -29,12 +29,16 @@ class NailgunClientSession(NailgunProtocol, NailgunProtocol.TimeoutProvider):
         """
         self._sock = sock
         self._input_writer = (
-            None
-            if not in_file
-            else NailgunStreamWriter(
-                (in_file.fileno(),), self._sock, (ChunkType.STDIN,), ChunkType.STDIN_EOF
+            NailgunStreamWriter(
+                (in_file.fileno(),),
+                self._sock,
+                (ChunkType.STDIN,),
+                ChunkType.STDIN_EOF,
             )
+            if in_file
+            else None
         )
+
         self._stdout = out_file
         self._stderr = err_file
         self._exit_on_broken_pipe = exit_on_broken_pipe
@@ -119,13 +123,14 @@ class NailgunClientSession(NailgunProtocol, NailgunProtocol.TimeoutProvider):
                     self._maybe_start_input_writer()
                 else:
                     raise self.ProtocolError(
-                        "received unexpected chunk {} -> {}".format(chunk_type, payload)
+                        f"received unexpected chunk {chunk_type} -> {payload}"
                     )
+
         except NailgunProtocol.ProcessStreamTimeout as e:
             logger.warning(
-                "timed out when attempting to gracefully shut down the remote run. Sending SIGKILL"
-                "message: {}".format(e)
+                f"timed out when attempting to gracefully shut down the remote run. Sending SIGKILLmessage: {e}"
             )
+
         finally:
             # Bad chunk types received from the server can throw NailgunProtocol.ProtocolError in
             # NailgunProtocol.iter_chunks(). This ensures the NailgunStreamWriter is always stopped.
@@ -274,7 +279,7 @@ class NailgunClient:
         :raises: :class:`NailgunClient.NailgunError` if there was an error during execution.
         """
         environment = dict(env or {})
-        environment.update(self.ENV_DEFAULTS)
+        environment |= self.ENV_DEFAULTS
         cwd = cwd or os.getcwd()
 
         sock = self.try_connect()

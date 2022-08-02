@@ -14,7 +14,7 @@ Key = str
 
 class OptionValueContainerBuilder:
     def __init__(self, value_map: Optional[Dict[Key, RankedValue]] = None) -> None:
-        self._value_map: Dict[Key, RankedValue] = value_map if value_map else {}
+        self._value_map: Dict[Key, RankedValue] = value_map or {}
 
     def update(self, other: "OptionValueContainerBuilder") -> None:
         """Set other's values onto this object.
@@ -65,11 +65,7 @@ class OptionValueContainer:
     def get_explicit_keys(self) -> List[Key]:
         """Returns the keys for any values that were set explicitly (via flag, config, or env
         var)."""
-        ret = []
-        for k, v in self._value_map.items():
-            if v.rank > Rank.CONFIG_DEFAULT:
-                ret.append(k)
-        return ret
+        return [k for k, v in self._value_map.items() if v.rank > Rank.CONFIG_DEFAULT]
 
     def get_rank(self, key: Key) -> Rank:
         """Returns the rank of the value at the specified key.
@@ -110,9 +106,7 @@ class OptionValueContainer:
 
     def get(self, key: Key, default: Optional[Value] = None):
         # Support dict-like dynamic access.  See also __getitem__ below.
-        if key not in self._value_map:
-            return default
-        return self._get_underlying_value(key)
+        return self._get_underlying_value(key) if key in self._value_map else default
 
     def as_dict(self) -> Dict[Key, Value]:
         return {key: self.get(key) for key in self._value_map}
@@ -143,5 +137,4 @@ class OptionValueContainer:
 
     def __iter__(self) -> Iterator[Key]:
         """Returns an iterator over all option names, in lexicographical order."""
-        for name in sorted(self._value_map.keys()):
-            yield name
+        yield from sorted(self._value_map.keys())

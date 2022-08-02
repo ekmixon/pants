@@ -48,20 +48,24 @@ async def export_codegen(
         if not tgt.has_field(Sources):
             continue
         sources = tgt[Sources]
-        for input_type in inputs_to_outputs:
-            if isinstance(sources, input_type):
-                output_type = inputs_to_outputs[input_type]
-                codegen_sources_fields_with_output.append((sources, output_type))
+        codegen_sources_fields_with_output.extend(
+            (sources, output_type)
+            for input_type, output_type in inputs_to_outputs.items()
+            if isinstance(sources, input_type)
+        )
 
     if not codegen_sources_fields_with_output:
         codegen_targets = sorted(
             {
                 tgt_type.alias
                 for tgt_type in registered_target_types.types
-                for input_sources in inputs_to_outputs.keys()
-                if tgt_type.class_has_field(input_sources, union_membership=union_membership)
+                for input_sources in inputs_to_outputs
+                if tgt_type.class_has_field(
+                    input_sources, union_membership=union_membership
+                )
             }
         )
+
         logger.warning(
             "No codegen files/targets matched. All codegen target types: "
             f"{', '.join(codegen_targets)}"

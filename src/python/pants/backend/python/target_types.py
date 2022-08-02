@@ -157,7 +157,7 @@ class EntryPoint(MainSpecification):
                 f"{value!r}. Consider deleting it to make it clear no entry point function is "
                 f"intended."
             )
-        return cls(module=module_or_path, function=func if func else None)
+        return cls(module=module_or_path, function=func or None)
 
     def __post_init__(self):
         if ":" in self.module:
@@ -334,9 +334,7 @@ class PexEmitWarningsField(TriBoolField):
     )
 
     def value_or_global_default(self, pex_binary_defaults: PexBinaryDefaults) -> bool:
-        if self.value is None:
-            return pex_binary_defaults.emit_warnings
-        return self.value
+        return pex_binary_defaults.emit_warnings if self.value is None else self.value
 
 
 class PexExecutionMode(Enum):

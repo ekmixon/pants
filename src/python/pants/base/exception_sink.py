@@ -135,9 +135,7 @@ class ExceptionSink:
 
     def __new__(cls, *args, **kwargs):
         raise TypeError(
-            "Instances of {} are not allowed to be constructed! Call install() instead.".format(
-                cls.__name__
-            )
+            f"Instances of {cls.__name__} are not allowed to be constructed! Call install() instead."
         )
 
     class ExceptionSinkError(Exception):
@@ -178,11 +176,10 @@ class ExceptionSink:
             safe_mkdir(new_log_location)
         except Exception as e:
             raise cls.ExceptionSinkError(
-                "The provided log location path at '{}' is not writable or could not be created: {}.".format(
-                    new_log_location, str(e)
-                ),
+                f"The provided log location path at '{new_log_location}' is not writable or could not be created: {str(e)}.",
                 e,
             )
+
 
         pid = os.getpid()
         pid_specific_log_path = cls.exceptions_log_path(for_pid=pid, in_dir=new_log_location)
@@ -193,10 +190,9 @@ class ExceptionSink:
             shared_error_stream = safe_open(shared_log_path, mode="a")
         except Exception as e:
             raise cls.ExceptionSinkError(
-                "Error opening fatal error log streams for log location '{}': {}".format(
-                    new_log_location, str(e)
-                )
+                f"Error opening fatal error log streams for log location '{new_log_location}': {str(e)}"
             )
+
 
         # NB: mutate process-global state!
         if faulthandler.is_enabled():
@@ -219,10 +215,10 @@ class ExceptionSink:
             intermediate_filename_component = ""
         else:
             assert isinstance(for_pid, Pid)
-            intermediate_filename_component = ".{}".format(for_pid)
+            intermediate_filename_component = f".{for_pid}"
         in_dir = in_dir or cls._log_dir
         return os.path.join(
-            in_dir, ".pids", "exceptions{}.log".format(intermediate_filename_component)
+            in_dir, ".pids", f"exceptions{intermediate_filename_component}.log"
         )
 
     @classmethod
@@ -239,10 +235,9 @@ class ExceptionSink:
             cls._try_write_with_flush(cls._pid_specific_error_fileobj, fatal_error_log_entry)
         except Exception as e:
             logger.error(
-                "Error logging the message '{}' to the pid-specific file handle for {} at pid {}:\n{}".format(
-                    msg, cls._log_dir, pid, e
-                )
+                f"Error logging the message '{msg}' to the pid-specific file handle for {cls._log_dir} at pid {pid}:\n{e}"
             )
+
 
         # Write to the shared log.
         try:
@@ -251,9 +246,7 @@ class ExceptionSink:
             cls._try_write_with_flush(cls._shared_error_fileobj, fatal_error_log_entry)
         except Exception as e:
             logger.error(
-                "Error logging the message '{}' to the shared file handle for {} at pid {}:\n{}".format(
-                    msg, cls._log_dir, pid, e
-                )
+                f"Error logging the message '{msg}' to the shared file handle for {cls._log_dir} at pid {pid}:\n{e}"
             )
 
     @classmethod
@@ -344,11 +337,11 @@ pid: {pid}
 
     @classmethod
     def _format_traceback(cls, traceback_lines, should_print_backtrace):
-        if should_print_backtrace:
-            traceback_string = "\n{}".format("".join(traceback_lines))
-        else:
-            traceback_string = " {}".format(cls._traceback_omitted_default_text)
-        return traceback_string
+        return (
+            f'\n{"".join(traceback_lines)}'
+            if should_print_backtrace
+            else f" {cls._traceback_omitted_default_text}"
+        )
 
     _UNHANDLED_EXCEPTION_LOG_FORMAT = """\
 Exception caught: ({exception_type}){backtrace}
@@ -358,7 +351,7 @@ Exception message: {exception_message}{maybe_newline}
     @classmethod
     def _format_unhandled_exception_log(cls, exc, tb, add_newline, should_print_backtrace):
         exc_type = type(exc)
-        exception_full_name = "{}.{}".format(exc_type.__module__, exc_type.__name__)
+        exception_full_name = f"{exc_type.__module__}.{exc_type.__name__}"
         exception_message = str(exc) if exc else "(no message)"
         maybe_newline = "\n" if add_newline else ""
         return cls._UNHANDLED_EXCEPTION_LOG_FORMAT.format(
@@ -391,7 +384,7 @@ Exception message: {exception_message}{maybe_newline}
             )
             cls._log_exception(exception_log_entry)
         except Exception as e:
-            extra_err_msg = "Additional error logging unhandled exception {}: {}".format(exc, e)
+            extra_err_msg = f"Additional error logging unhandled exception {exc}: {e}"
             logger.error(extra_err_msg)
 
         # The rust logger implementation will have its own stacktrace, but at import time, we want

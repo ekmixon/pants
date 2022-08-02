@@ -78,9 +78,7 @@ class DeduplicatedCollection(FrozenOrderedSet[T]):
     sort_input: ClassVar[bool] = False
 
     def __init__(self, iterable: Iterable[T] = ()) -> None:
-        super().__init__(
-            iterable if not self.sort_input else sorted(iterable)  # type: ignore[type-var]
-        )
+        super().__init__(sorted(iterable) if self.sort_input else iterable)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({list(self._items)})"

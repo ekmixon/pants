@@ -53,9 +53,7 @@ class _RuleVisitor(ast.NodeVisitor):
         """Check if the node looks like a Get(T, ...) call."""
         if not isinstance(call_node.func, ast.Name):
             return None
-        if call_node.func.id != "Get":
-            return None
-        return call_node.args
+        return None if call_node.func.id != "Get" else call_node.args
 
     def visit_Call(self, call_node: ast.Call) -> None:
         get_args = self.maybe_extract_get_args(call_node)
@@ -312,12 +310,10 @@ def validate_parameter_types(
 def inner_rule(*args, **kwargs) -> Callable:
     if len(args) == 1 and inspect.isfunction(args[0]):
         return rule_decorator(*args, **kwargs)
-    else:
+    def wrapper(*args):
+        return rule_decorator(*args, **kwargs)
 
-        def wrapper(*args):
-            return rule_decorator(*args, **kwargs)
-
-        return wrapper
+    return wrapper
 
 
 def rule(*args, **kwargs) -> Callable:

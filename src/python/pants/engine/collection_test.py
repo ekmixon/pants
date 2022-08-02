@@ -23,7 +23,7 @@ def test_collection_contains() -> None:
 def test_collection_iteration() -> None:
     c1 = Collection([1, 2])
     assert list(iter(c1)) == [1, 2]
-    assert [x for x in c1] == [1, 2]
+    assert list(c1) == [1, 2]
 
 
 def test_collection_length() -> None:
@@ -71,8 +71,8 @@ def test_collection_hash() -> None:
 
 
 def test_collection_bool() -> None:
-    assert bool(Collection([0])) is True
-    assert bool(Collection([])) is False
+    assert bool(Collection([0]))
+    assert not bool(Collection([]))
 
 
 def test_collection_repr() -> None:
@@ -83,9 +83,10 @@ def test_collection_repr() -> None:
 
 
 def test_deduplicated_collection() -> None:
-    # NB: most of the functionality, like testing .union() and .intersection(), is tested
-    # exhaustively in the tests for FrozenOrderedSet. Here, we only have a couple basic
-    # smoke-screen tests to ensure things work properly.
+# NB: most of the functionality, like testing .union() and .intersection(), is tested
+# exhaustively in the tests for FrozenOrderedSet. Here, we only have a couple basic
+# smoke-screen tests to ensure things work properly.
+
     class DedupedExamples(DeduplicatedCollection[int]):
         sort_input = True
 
@@ -117,8 +118,8 @@ def test_deduplicated_collection() -> None:
     assert DedupedExamples2([2, 1]) != DedupedExamples2([1, 2])
 
     # Test bool
-    assert bool(DeduplicatedCollection([])) is False
-    assert bool(DeduplicatedCollection([1])) is True
+    assert not bool(DeduplicatedCollection([]))
+    assert bool(DeduplicatedCollection([1]))
 
     # Test repr
     assert repr(DedupedExamples()) == "DedupedExamples([])"

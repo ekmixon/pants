@@ -32,7 +32,7 @@ def test_unrecogonized_symbol() -> None:
             ),
         )
         prelude_symbols = BuildFilePreludeSymbols(FrozenDict({"prelude": 0}))
-        fmt_extra_sym = str(extra_targets)[1:-1] + (", ") if len(extra_targets) != 0 else ""
+        fmt_extra_sym = f"{str(extra_targets)[1:-1]}, " if extra_targets else ""
         with pytest.raises(ParseError) as exc:
             parser.parse("dir/BUILD", "fake", prelude_symbols)
         assert str(exc.value) == (

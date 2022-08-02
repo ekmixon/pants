@@ -104,12 +104,12 @@ class ExternalTool(Subsystem, metaclass=ABCMeta):
             )
 
     @classproperty
-    def name(cls):
+    def name(self):
         """The name of the tool, for use in user-facing messages.
 
         Derived from the classname, but subclasses can override, e.g., with a classproperty.
         """
-        return cls.__name__.lower()
+        return self.__name__.lower()
 
     @classmethod
     def register_options(cls, register):
@@ -164,7 +164,7 @@ class ExternalTool(Subsystem, metaclass=ABCMeta):
                 f"""
                 What action to take in case the requested version of {cls.name} is not supported.
 
-                Supported {cls.name} versions: {cls.version_constraints if cls.version_constraints else "unspecified"}
+                Supported {cls.name} versions: {cls.version_constraints or "unspecified"}
                 """
             ),
             default=UnsupportedVersionUsage.RaiseError,
@@ -318,12 +318,12 @@ class TemplatedExternalTool(ExternalTool):
         upm = self.options.url_platform_mapping
         if "linux" in upm or "darwin" in upm:
             Platform.deprecated_due_to_no_architecture()
-            if "linux" in upm:
-                upm["linux_x86_64"] = upm["linux"]
-                del upm["linux"]
-            if "darwin" in upm:
-                upm["macos_x86_64"] = upm["darwin"]
-                del upm["darwin"]
+        if "linux" in upm:
+            upm["linux_x86_64"] = upm["linux"]
+            del upm["linux"]
+        if "darwin" in upm:
+            upm["macos_x86_64"] = upm["darwin"]
+            del upm["darwin"]
 
         return cast(Optional[Dict[str, str]], upm)
 

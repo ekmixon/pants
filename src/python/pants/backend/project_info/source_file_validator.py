@@ -197,28 +197,26 @@ class MultiMatcher:
             path_patterns_used.add(k)
             if not isinstance(v, (tuple, list)):
                 raise ValueError(
-                    "Value for path pattern {} in required_matches must be tuple of "
-                    "content pattern names, but was {}".format(k, v)
+                    f"Value for path pattern {k} in required_matches must be tuple of content pattern names, but was {v}"
                 )
+
             content_patterns_used.update(v)
 
-        unknown_path_patterns = path_patterns_used.difference(
+        if unknown_path_patterns := path_patterns_used.difference(
             pp.name for pp in config.path_patterns
-        )
-        if unknown_path_patterns:
+        ):
             raise ValueError(
-                "required_matches uses unknown path pattern names: "
-                "{}".format(", ".join(sorted(unknown_path_patterns)))
+                f'required_matches uses unknown path pattern names: {", ".join(sorted(unknown_path_patterns))}'
             )
 
-        unknown_content_patterns = content_patterns_used.difference(
+
+        if unknown_content_patterns := content_patterns_used.difference(
             cp.name for cp in config.content_patterns
-        )
-        if unknown_content_patterns:
+        ):
             raise ValueError(
-                "required_matches uses unknown content pattern names: "
-                "{}".format(", ".join(sorted(unknown_content_patterns)))
+                f'required_matches uses unknown content pattern names: {", ".join(sorted(unknown_content_patterns))}'
             )
+
 
         self._path_matchers = {pp.name: PathMatcher(pp) for pp in config.path_patterns}
         self._content_matchers = {cp.name: ContentMatcher(cp) for cp in config.content_patterns}
@@ -267,10 +265,9 @@ class MultiMatcher:
                 applicable_content_pattern_names.update(content_pattern_names)
         if len(encodings) > 1:
             raise ValueError(
-                "Path matched patterns with multiple content encodings ({}): {}".format(
-                    ", ".join(sorted(encodings)), path
-                )
+                f'Path matched patterns with multiple content encodings ({", ".join(sorted(encodings))}): {path}'
             )
+
         content_encoding = next(iter(encodings)) if encodings else None
         return applicable_content_pattern_names, content_encoding
 
@@ -308,20 +305,27 @@ async def validate(
         else:
             icon = "V"
             num_matched_all += 1
-        matched_msg = " Matched: {}".format(",".join(rmr.matching)) if rmr.matching else ""
+        matched_msg = f' Matched: {",".join(rmr.matching)}' if rmr.matching else ""
         nonmatched_msg = (
-            " Didn't match: {}".format(",".join(rmr.nonmatching)) if rmr.nonmatching else ""
+            f""" Didn't match: {",".join(rmr.nonmatching)}"""
+            if rmr.nonmatching
+            else ""
         )
+
         if detail_level == DetailLevel.all or (
             detail_level == DetailLevel.nonmatching and nonmatched_msg
         ):
-            console.print_stdout("{} {}:{}{}".format(icon, rmr.path, matched_msg, nonmatched_msg))
+            console.print_stdout(f"{icon} {rmr.path}:{matched_msg}{nonmatched_msg}")
 
     if detail_level not in (DetailLevel.none, DetailLevel.names):
-        console.print_stdout("\n{} files matched all required patterns.".format(num_matched_all))
         console.print_stdout(
-            "{} files failed to match at least one required pattern.".format(num_nonmatched_some)
+            f"\n{num_matched_all} files matched all required patterns."
         )
+
+        console.print_stdout(
+            f"{num_nonmatched_some} files failed to match at least one required pattern."
+        )
+
 
     if num_nonmatched_some:
         exit_code = PANTS_FAILED_EXIT_CODE

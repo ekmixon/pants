@@ -28,11 +28,9 @@ async def inject_go_module_dependency(request: InjectGoModuleDependency) -> Inje
         if tgt.has_field(GoModuleSources) and not tgt.address.is_file_target
     ]
 
-    # Sort by address.spec_path in descending order so the nearest go_module target is sorted first.
-    sorted_go_module_targets = sorted(
+    if sorted_go_module_targets := sorted(
         go_module_targets, key=lambda tgt: tgt.address.spec_path, reverse=True
-    )
-    if sorted_go_module_targets:
+    ):
         nearest_go_module_target = sorted_go_module_targets[0]
         return InjectedDependencies([nearest_go_module_target.address])
     else:

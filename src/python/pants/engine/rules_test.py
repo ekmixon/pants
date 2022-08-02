@@ -287,9 +287,7 @@ class GraphVertexType(Enum):
                 GraphVertexType.param: orange,
             },
         )
-        if color is None:
-            return None
-        return f'[color="{color}",style=filled]'
+        return None if color is None else f'[color="{color}",style=filled]'
 
 
 def fmt_non_param_edge(
@@ -307,26 +305,15 @@ def fmt_non_param_edge(
 
     if return_func is None:
         color = rule_type.graph_vertex_color_fmt_str()
-        if color is None:
-            via_return_func = "-> {}"
-        else:
-            via_return_func = color
+        via_return_func = "-> {}" if color is None else color
     else:
         return_func_fmt = return_func.format()
         via_return_func = "-> {" + f'"{return_func_fmt}\nfor {product_name}"' + "}"
 
     via_func_subject = RuleFormatRequest.format_rule(subject)
 
-    if rule_type == GraphVertexType.singleton:
-        spacing = ""
-    else:
-        spacing = "    "
-
-    if append_for_product:
-        before_return = f"\nfor {product_name}"
-    else:
-        before_return = ""
-
+    spacing = "" if rule_type == GraphVertexType.singleton else "    "
+    before_return = f"\nfor {product_name}" if append_for_product else ""
     return dedent(
         f"""\
         {spacing}"{via_func_subject}{before_return}" {via_return_func}\
@@ -387,7 +374,7 @@ class Example(Goal):
 
 @goal_rule
 async def a_goal_rule_generator(console: Console) -> Example:
-    a = await Get(A, str("a str!"))
+    a = await Get(A, "a str!")
     console.print_stdout(str(a))
     return Example(exit_code=0)
 

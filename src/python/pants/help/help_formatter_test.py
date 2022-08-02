@@ -76,7 +76,7 @@ class OptionHelpFormatterTest(unittest.TestCase):
         kwargs = {"advanced": True}
         lines = self._format_for_global_scope(False, False, args, kwargs)
         assert len(lines) == 7
-        assert not any("--foo" in line for line in lines)
+        assert all("--foo" not in line for line in lines)
         lines = self._format_for_global_scope(True, False, args, kwargs)
         assert len(lines) == 17
 
@@ -85,6 +85,6 @@ class OptionHelpFormatterTest(unittest.TestCase):
         kwargs = {"removal_version": "33.44.55.dev0"}
         lines = self._format_for_global_scope(False, False, args, kwargs)
         assert len(lines) == 7
-        assert not any("--foo" in line for line in lines)
+        assert all("--foo" not in line for line in lines)
         lines = self._format_for_global_scope(True, True, args, kwargs)
         assert len(lines) == 22

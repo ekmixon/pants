@@ -22,10 +22,12 @@ class TargetAdaptor:
         return f"TargetAdaptor(type_alias={self.type_alias}, name={self.name})"
 
     def __eq__(self, other: Any | TargetAdaptor) -> bool:
-        if not isinstance(other, TargetAdaptor):
-            return NotImplemented
         return (
-            self.type_alias == other.type_alias
-            and self.name == other.name
-            and self.kwargs == other.kwargs
+            (
+                self.type_alias == other.type_alias
+                and self.name == other.name
+                and self.kwargs == other.kwargs
+            )
+            if isinstance(other, TargetAdaptor)
+            else NotImplemented
         )

@@ -343,12 +343,11 @@ async def restrict_conflicting_sources(ptgt: PutativeTarget) -> DisjointSourcePu
     possible_owners_sources = await MultiGet(
         Get(SourcesPaths, SourcesPathsRequest(t.get(Sources))) for t in possible_owners
     )
-    conflicting_targets = []
-    for tgt, sources in zip(possible_owners, possible_owners_sources):
-        if source_path_set.intersection(sources.files):
-            conflicting_targets.append(tgt)
-
-    if conflicting_targets:
+    if conflicting_targets := [
+        tgt
+        for tgt, sources in zip(possible_owners, possible_owners_sources)
+        if source_path_set.intersection(sources.files)
+    ]:
         conflicting_addrs = sorted(tgt.address.spec for tgt in conflicting_targets)
         explicit_srcs_str = ", ".join(ptgt.kwargs.get("sources") or [])  # type: ignore[arg-type]
         orig_sources_str = (
@@ -480,9 +479,7 @@ async def tailor(
         Get(DisjointSourcePutativeTarget, PutativeTarget, ptgt)
         for ptgt in fixed_names_ptgts.putative_targets
     )
-    ptgts = [dspt.putative_target for dspt in fixed_sources_ptgts]
-
-    if ptgts:
+    if ptgts := [dspt.putative_target for dspt in fixed_sources_ptgts]:
         edited_build_files = await Get(
             EditedBuildFiles,
             EditBuildFilesRequest(PutativeTargets(ptgts), tailor_subsystem.build_file_indent),

@@ -77,8 +77,7 @@ class PexRuntimeEnvironment(Subsystem):
                 if entry == "<PATH>":
                     path = env.get("PATH")
                     if path:
-                        for path_entry in path.split(os.pathsep):
-                            yield path_entry
+                        yield from path.split(os.pathsep)
                 else:
                     yield entry
 
@@ -220,8 +219,7 @@ class CompletePexEnvironment:
     def create_argv(
         self, pex_filepath: str, *args: str, python: Optional[PythonExecutable] = None
     ) -> Tuple[str, ...]:
-        python = python or self._pex_environment.bootstrap_python
-        if python:
+        if python := python or self._pex_environment.bootstrap_python:
             return (python.path, pex_filepath, *args)
         if os.path.basename(pex_filepath) == pex_filepath:
             return (f"./{pex_filepath}", *args)

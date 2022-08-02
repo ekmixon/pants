@@ -255,12 +255,11 @@ async def fmt(
     if not individual_results:
         return Fmt(exit_code=0)
 
-    changed_digests = tuple(
+    if changed_digests := tuple(
         language_result.output
         for language_result in per_language_results
         if language_result.did_change
-    )
-    if changed_digests:
+    ):
         # NB: this will fail if there are any conflicting changes, which we want to happen rather
         # than silently having one result override the other. In practice, this should never
         # happen due to us grouping each language's formatters into a single digest.

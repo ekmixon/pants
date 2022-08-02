@@ -135,11 +135,10 @@ async def parse_shell_imports(
 
     paths = set()
     for error in output:
-        if not error.get("code", "") == 1091:
+        if error.get("code", "") != 1091:
             continue
         msg = error.get("message", "")
-        matches = PATH_FROM_SHELLCHECK_ERROR.match(msg)
-        if matches:
+        if matches := PATH_FROM_SHELLCHECK_ERROR.match(msg):
             paths.add(matches.group(1))
         else:
             logger.error(
@@ -192,8 +191,9 @@ async def infer_shell_dependencies(
                     import_reference="file",
                     context=f"The target {address} sources `{import_path}`",
                 )
-                maybe_disambiguated = explicitly_provided_deps.disambiguated(ambiguous)
-                if maybe_disambiguated:
+                if maybe_disambiguated := explicitly_provided_deps.disambiguated(
+                    ambiguous
+                ):
                     result.add(maybe_disambiguated)
     return InferredDependencies(sorted(result), sibling_dependencies_inferrable=True)
 

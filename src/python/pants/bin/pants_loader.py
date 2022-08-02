@@ -108,9 +108,7 @@ class PantsLoader:
 
         sys.setrecursionlimit(int(os.environ.get(RECURSION_LIMIT, "10000")))
 
-        entrypoint = os.environ.pop(DAEMON_ENTRYPOINT, None)
-
-        if entrypoint:
+        if entrypoint := os.environ.pop(DAEMON_ENTRYPOINT, None):
             cls.run_alternate_entrypoint(entrypoint)
         else:
             cls.run_default_entrypoint()

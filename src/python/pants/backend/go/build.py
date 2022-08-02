@@ -231,8 +231,11 @@ async def package_go_binary(
 
     input_root_digests = OrderedSet([built_main_go_package.object_digest, merged_packages_digest])
     import_config: List[str] = ["# import config"]
-    for import_path, (fp, _) in import_config_digests.items():
-        import_config.append(f"packagefile {import_path}=__pkgs__/{fp}/__pkg__.a")
+    import_config.extend(
+        f"packagefile {import_path}=__pkgs__/{fp}/__pkg__.a"
+        for import_path, (fp, _) in import_config_digests.items()
+    )
+
     for pkg, pkg_descriptor in goroot_import_mappings.import_path_mapping.items():
         input_root_digests.add(pkg_descriptor.digest)
         import_config.append(f"packagefile {pkg}={os.path.normpath(pkg_descriptor.path)}")
@@ -250,8 +253,7 @@ async def package_go_binary(
     input_snapshot = await Get(Snapshot, Digest, input_digest)
     _logger.info(f"input_snapshot={input_snapshot.files}")
 
-    output_filename_str = field_set.output_path.value
-    if output_filename_str:
+    if output_filename_str := field_set.output_path.value:
         output_filename = PurePath(output_filename_str)
     else:
         # TODO: Figure out default for binary_name. Had to do `or "name-not-set"` to satisfy mypy.

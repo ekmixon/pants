@@ -263,18 +263,15 @@ class CoverageReports(EngineAwareReturnType):
     def materialize(self, console: Console, workspace: Workspace) -> Tuple[PurePath, ...]:
         report_paths = []
         for report in self.reports:
-            report_path = report.materialize(console, workspace)
-            if report_path:
+            if report_path := report.materialize(console, workspace):
                 report_paths.append(report_path)
         return tuple(report_paths)
 
     def artifacts(self) -> Optional[Dict[str, Union[Snapshot, FileDigest]]]:
         artifacts: Dict[str, Union[Snapshot, FileDigest]] = {}
         for report in self.reports:
-            artifact = report.get_artifact()
-            if not artifact:
-                continue
-            artifacts[artifact[0]] = artifact[1]
+            if artifact := report.get_artifact():
+                artifacts[artifact[0]] = artifact[1]
         return artifacts or None
 
 

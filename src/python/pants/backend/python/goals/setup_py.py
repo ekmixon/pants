@@ -240,7 +240,7 @@ class SetupKwargs:
         # would require that all values are immutable, and we may have lists and dictionaries as
         # values. It's too difficult/clunky to convert those all, then to convert them back out of
         # `FrozenDict`. We don't use JSON because it does not preserve data types like `tuple`.
-        self._pickled_bytes = pickle.dumps({k: v for k, v in sorted(kwargs.items())}, protocol=4)
+        self._pickled_bytes = pickle.dumps(dict(sorted(kwargs.items())), protocol=4)
 
     @memoized_property
     def kwargs(self) -> Dict[str, Any]:
@@ -390,9 +390,10 @@ async def package_python_dist(
         SetupPyChrootRequest(exported_target, py2=interpreter_constraints.includes_python2()),
     )
 
-    # If commands were provided, run setup.py with them; Otherwise just dump chroots.
-    commands = exported_target.target.get(SetupPyCommandsField).value or ()
-    if commands:
+    if (
+        commands := exported_target.target.get(SetupPyCommandsField).value
+        or ()
+    ):
         validate_commands(commands)
         setup_py_result = await Get(
             RunSetupPyResult,
@@ -527,11 +528,8 @@ async def generate_chroot(request: SetupPyChrootRequest) -> SetupPyChroot:
     resolved_setup_kwargs = await Get(SetupKwargs, ExportedTarget, exported_target)
     setup_kwargs = resolved_setup_kwargs.kwargs.copy()
 
-    setup_script = setup_kwargs.pop("setup_script", None)
-    if setup_script:
-        # The target points to an existing setup.py script, so use that.
-        invalid_keys = set(setup_kwargs.keys()) - {"name", "version"}
-        if invalid_keys:
+    if setup_script := setup_kwargs.pop("setup_script", None):
+        if invalid_keys := set(setup_kwargs.keys()) - {"name", "version"}:
             raise InvalidSetupPyArgs(
                 f"The `provides` field in {exported_addr} specifies a setup_script kwarg, so it "
                 f"must only specify the name and version kwargs, but it also specified "
@@ -569,6 +567,7 @@ async def generate_chroot(request: SetupPyChrootRequest) -> SetupPyChroot:
         Targets, UnparsedAddressInputs(key_to_binary_spec.values(), owning_address=target.address)
     )
     entry_point_requests = []
+    url = "https://python-packaging.readthedocs.io/en/latest/command-line-scripts.html#the-console-scripts-entry-point"
     for binary in binaries:
         if not binary.has_field(PexEntryPointField):
             raise InvalidEntryPoint(
@@ -577,7 +576,6 @@ async def generate_chroot(request: SetupPyChrootRequest) -> SetupPyChroot:
                 f"type {binary.alias}."
             )
         entry_point = binary[PexEntryPointField].value
-        url = "https://python-packaging.readthedocs.io/en/latest/command-line-scripts.html#the-console-scripts-entry-point"
         if not entry_point.function:
             raise InvalidEntryPoint(
                 "Every `pex_binary` used in `with_binaries()` for the `provides()` field for "
@@ -623,11 +621,10 @@ async def generate_chroot(request: SetupPyChrootRequest) -> SetupPyChroot:
             "console_scripts": entry_points_from_with_binaries
         },
         f"{exported_addr}'s field `entry_points`": entry_points_from_field,
-        f"{exported_addr}'s field `provides=setup_py(..., entry_points={...})`": entry_points_from_provides,
+        f"{exported_addr}'s field `provides=setup_py(..., entry_points=Ellipsis)`": entry_points_from_provides,
     }
-    # Merge all collected entry points and add them to the dist's entry points.
-    entry_points = merge_entry_points(*list(entry_point_sources.items()))
-    if entry_points:
+
+    if entry_points := merge_entry_points(*list(entry_point_sources.items())):
         setup_kwargs["entry_points"] = entry_points
 
     # Generate the setup script.
@@ -715,16 +712,17 @@ async def get_requirements(
     )
 
     transitive_excludes: FrozenOrderedSet[Target] = FrozenOrderedSet()
-    uneval_trans_excl = [
-        tgt.get(Dependencies).unevaluated_transitive_excludes for tgt in transitive_targets.closure
-    ]
-    if uneval_trans_excl:
+    if uneval_trans_excl := [
+        tgt.get(Dependencies).unevaluated_transitive_excludes
+        for tgt in transitive_targets.closure
+    ]:
         nested_trans_excl = await MultiGet(
             Get(Targets, UnparsedAddressInputs, unparsed) for unparsed in uneval_trans_excl
         )
         transitive_excludes = FrozenOrderedSet(
-            itertools.chain.from_iterable(excludes for excludes in nested_trans_excl)
+            itertools.chain.from_iterable(iter(nested_trans_excl))
         )
+
 
     direct_deps_chained = FrozenOrderedSet(itertools.chain.from_iterable(direct_deps_tgts))
     direct_deps_with_excl = direct_deps_chained.difference(transitive_excludes)
@@ -885,7 +883,7 @@ def distutils_repr(obj):
                 _write_repr(k, indent=True, level=level)
                 _write(": ")
                 _write_repr(v, indent=False, level=level)
-                _write("," + linesep)
+                _write(f",{linesep}")
             _write(pad + "}")
         elif isinstance(o, abc.Iterable):
             if isinstance(o, abc.MutableSequence):
@@ -898,7 +896,7 @@ def distutils_repr(obj):
             _write(open_collection + linesep)
             for i in o:
                 _write_repr(i, indent=True, level=level)
-                _write("," + linesep)
+                _write(f",{linesep}")
             _write(pad + close_collection)
         else:
             _write(repr(o))  # Numbers and bools.

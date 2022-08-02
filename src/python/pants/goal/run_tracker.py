@@ -36,9 +36,7 @@ class RunTrackerOptionEncoder(CoercingOptionEncoder):
     """
 
     def default(self, o):
-        if isinstance(o, OrderedDict):
-            return o
-        return super().default(o)
+        return o if isinstance(o, OrderedDict) else super().default(o)
 
 
 class RunTracker:
@@ -64,7 +62,7 @@ class RunTracker:
         self._run_info: Dict[str, Any] = {}
 
         # pantsd stats.
-        self._pantsd_metrics: Dict[str, int] = dict()
+        self._pantsd_metrics: Dict[str, int] = {}
 
         self.run_logs_file = Path(info_dir, self.run_id, "logs")
         safe_mkdir_for(str(self.run_logs_file))
@@ -217,10 +215,7 @@ class RunTracker:
             value = self._all_options.for_scope(
                 scope_to_look_up, inherit_from_enclosing_scope=False
             ).as_dict()
-            if option is None:
-                return value
-            else:
-                return value[option]
+            return value if option is None else value[option]
         except (Config.ConfigValidationError, AttributeError) as e:
             option_str = "" if option is None else f" option {option}"
             raise ValueError(

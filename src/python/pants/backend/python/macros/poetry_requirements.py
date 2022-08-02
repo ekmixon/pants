@@ -248,8 +248,9 @@ def handle_dict_attr(
 
     path_lookup = attributes.get("path")
     if path_lookup is not None:
-        non_pants_project_abs_path = pyproject_toml.non_pants_project_abs_path(path_lookup)
-        if non_pants_project_abs_path:
+        if non_pants_project_abs_path := pyproject_toml.non_pants_project_abs_path(
+            path_lookup
+        ):
             base = f"{proj_name}{extras_str} @ file://{non_pants_project_abs_path}"
         else:
             # An internal path will be handled by normal Pants dependencies and dependency inference;
@@ -294,14 +295,14 @@ def parse_single_dependency(
     elif isinstance(attributes, dict):
         # E.g. `foo = {version = "~1.1"}`.
         pyproject_attr = cast(PyprojectAttr, attributes)
-        req_str = handle_dict_attr(proj_name, pyproject_attr, pyproject_toml)
-        if req_str:
+        if req_str := handle_dict_attr(
+            proj_name, pyproject_attr, pyproject_toml
+        ):
             yield Requirement.parse(req_str)
     elif isinstance(attributes, list):
         # E.g. ` foo = [{version = "1.1","python" = "2.7"}, {version = "1.1","python" = "2.7"}]
         for attr in attributes:
-            req_str = handle_dict_attr(proj_name, attr, pyproject_toml)
-            if req_str:
+            if req_str := handle_dict_attr(proj_name, attr, pyproject_toml):
                 yield Requirement.parse(req_str)
     else:
         raise AssertionError(

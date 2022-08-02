@@ -22,7 +22,7 @@ def test_visualize_to():
             ]
         ).assert_success()
         destdir_files = list(Path(destdir).iterdir())
-        assert len(destdir_files) > 0
+        assert destdir_files
 
 
 @ensure_daemon

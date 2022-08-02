@@ -16,10 +16,8 @@ def test_reversion() -> None:
         # Download an input whl.
         name_template = "virtualenv-{}-py2.py3-none-any.whl"
         input_name = name_template.format("15.1.0")
-        url = (
-            "https://files.pythonhosted.org/packages/6f/86/"
-            "3dc328ee7b1a6419ebfac7896d882fba83c48e3561d22ddddf38294d3e83/{}".format(input_name)
-        )
+        url = f"https://files.pythonhosted.org/packages/6f/86/3dc328ee7b1a6419ebfac7896d882fba83c48e3561d22ddddf38294d3e83/{input_name}"
+
         input_whl_file = os.path.join(dest_dir, input_name)
         with open(input_whl_file, "wb") as f:
             shutil.copyfileobj(requests.get(url, stream=True).raw, f)

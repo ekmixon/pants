@@ -132,7 +132,7 @@ def determine_python_files(files: Iterable[str]) -> Tuple[str, ...]:
             result.discard(py_file)
             result.add(f)
         elif f.endswith(".py"):
-            pyi_file = f + "i"
+            pyi_file = f"{f}i"
             if pyi_file not in result:
                 result.add(f)
     return tuple(result)

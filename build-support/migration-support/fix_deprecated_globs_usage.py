@@ -23,13 +23,14 @@ from typing import Dict, List, NamedTuple, Optional, Set, Union
 
 def main() -> None:
     args = create_parser().parse_args()
-    build_files: Set[Path] = set(
+    build_files: Set[Path] = {
         fp
         for folder in args.folders
         for fp in [*folder.rglob("BUILD"), *folder.rglob("BUILD.*")]
         # Check that it really is a BUILD file
         if fp.is_file() and fp.stem == "BUILD"
-    )
+    }
+
     updates: Dict[Path, List[str]] = {}
     for build in build_files:
         try:
@@ -95,7 +96,7 @@ class GlobFunction(NamedTuple):
                     # We want to translate *.py to **/*.py, not **/**/*.py
                     out.append(component)
                 else:
-                    out.append("**/" + component)
+                    out.append(f"**/{component}")
             else:
                 out.append(component)
         return os.path.join(*out)
@@ -175,8 +176,8 @@ class GlobFunction(NamedTuple):
 
 
 def use_single_quotes(line: str) -> bool:
-    num_single_quotes = sum(1 for c in line if c == "'")
-    num_double_quotes = sum(1 for c in line if c == '"')
+    num_single_quotes = line.count("'")
+    num_double_quotes = line.count('"')
     return num_single_quotes > num_double_quotes
 
 

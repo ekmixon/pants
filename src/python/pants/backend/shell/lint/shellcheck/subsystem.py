@@ -78,8 +78,10 @@ class Shellcheck(TemplatedExternalTool):
         # discovered.
         candidates = []
         for d in ("", *dirs):
-            candidates.append(os.path.join(d, ".shellcheckrc"))
-            candidates.append(os.path.join(d, "shellcheckrc"))
+            candidates.extend(
+                (os.path.join(d, ".shellcheckrc"), os.path.join(d, "shellcheckrc"))
+            )
+
         return ConfigFilesRequest(
             discovery=cast(bool, self.options.config_discovery), check_existence=candidates
         )

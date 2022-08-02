@@ -123,7 +123,7 @@ def load_backend(build_configuration: BuildConfiguration.Builder, backend_packag
     :raises: :class:``pants.base.exceptions.BuildConfigurationError`` if there is a problem loading
       the build configuration.
     """
-    backend_module = backend_package + ".register"
+    backend_module = f"{backend_package}.register"
     try:
         module = importlib.import_module(backend_module)
     except ImportError as ex:

@@ -49,8 +49,7 @@ class SpecsParser:
         self._root_dir = os.path.realpath(root_dir)
 
     def _normalize_spec_path(self, path: str) -> str:
-        is_abs = not path.startswith("//") and os.path.isabs(path)
-        if is_abs:
+        if is_abs := not path.startswith("//") and os.path.isabs(path):
             path = os.path.realpath(path)
             if os.path.commonprefix([self._root_dir, path]) != self._root_dir:
                 raise self.BadSpecError(

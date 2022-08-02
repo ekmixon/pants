@@ -1505,9 +1505,9 @@ class GlobalOptions(Subsystem):
     def create_py_executor(bootstrap_options: OptionValueContainer) -> PyExecutor:
         rule_threads_max = (
             bootstrap_options.rule_threads_max
-            if bootstrap_options.rule_threads_max
-            else 4 * bootstrap_options.rule_threads_core
+            or 4 * bootstrap_options.rule_threads_core
         )
+
         return PyExecutor(
             core_threads=bootstrap_options.rule_threads_core, max_threads=rule_threads_max
         )
@@ -1516,9 +1516,9 @@ class GlobalOptions(Subsystem):
     def create_py_executor_pyo3(bootstrap_options: OptionValueContainer) -> PyExecutorPyO3:
         rule_threads_max = (
             bootstrap_options.rule_threads_max
-            if bootstrap_options.rule_threads_max
-            else 4 * bootstrap_options.rule_threads_core
+            or 4 * bootstrap_options.rule_threads_core
         )
+
         return PyExecutorPyO3(
             core_threads=bootstrap_options.rule_threads_core, max_threads=rule_threads_max
         )
@@ -1574,7 +1574,7 @@ class GlobalOptions(Subsystem):
                     f"Changes to {glob}, outside of the buildroot, will not be invalidated."
                 )
             else:
-                invalidation_globs.update([glob_relpath, glob_relpath + "/**"])
+                invalidation_globs.update([glob_relpath, f"{glob_relpath}/**"])
 
         # Explicitly specified globs are already relative, and are added verbatim.
         invalidation_globs.update(

@@ -162,10 +162,10 @@ async def py_constraints(
 
     constraints_to_addresses = defaultdict(set)
     for tgt in transitive_targets.closure:
-        constraints = InterpreterConstraints.create_from_targets([tgt], python_setup)
-        if not constraints:
-            continue
-        constraints_to_addresses[constraints].add(tgt.address)
+        if constraints := InterpreterConstraints.create_from_targets(
+            [tgt], python_setup
+        ):
+            constraints_to_addresses[constraints].add(tgt.address)
 
     with py_constraints_subsystem.output(console) as output_stdout:
         output_stdout(f"Final merged constraints: {final_constraints}\n")

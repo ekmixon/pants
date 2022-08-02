@@ -309,7 +309,7 @@ def test_pex_working_directory(rule_runner: RuleRunner, pex_type: type[Pex | Ven
     runtime_files = rule_runner.request(Digest, [CreateDigest([Directory(path=dirpath)])])
 
     dirpath_parts = os.path.split(dirpath)
-    for i in range(0, len(dirpath_parts)):
+    for i in range(len(dirpath_parts)):
         working_dir = os.path.join(*dirpath_parts[:i]) if i > 0 else None
         expected_subdir = os.path.join(*dirpath_parts[i:]) if i < len(dirpath_parts) else None
         process = rule_runner.request(
@@ -327,7 +327,7 @@ def test_pex_working_directory(rule_runner: RuleRunner, pex_type: type[Pex | Ven
         output_str = result.stdout.decode()
         mo = re.search(r"CWD: (.*)\n", output_str)
         assert mo is not None
-        reported_cwd = mo.group(1)
+        reported_cwd = mo[1]
         if working_dir:
             assert reported_cwd.endswith(working_dir)
         if expected_subdir:
@@ -348,9 +348,10 @@ def test_requirement_constraints(rule_runner: RuleRunner) -> None:
     direct_deps = ["requests>=1.0.0,<=2.23.0"]
 
     def assert_direct_requirements(pex_info):
-        assert set(Requirement.parse(r) for r in pex_info["requirements"]) == set(
+        assert {Requirement.parse(r) for r in pex_info["requirements"]} == {
             Requirement.parse(d) for d in direct_deps
-        )
+        }
+
 
     # Unconstrained, we should always pick the top of the range (requests 2.23.0) since the top of
     # the range is a transitive closure over universal wheels.
@@ -417,8 +418,14 @@ def test_platforms(rule_runner: RuleRunner) -> None:
     assert any(
         "cryptography-2.9-cp27-cp27mu-manylinux2010_x86_64.whl" in fp for fp in pex_output["files"]
     )
-    assert not any("cryptography-2.9-cp27-cp27m-" in fp for fp in pex_output["files"])
-    assert not any("cryptography-2.9-cp35-abi3" in fp for fp in pex_output["files"])
+    assert all(
+        "cryptography-2.9-cp27-cp27m-" not in fp for fp in pex_output["files"]
+    )
+
+    assert all(
+        "cryptography-2.9-cp35-abi3" not in fp for fp in pex_output["files"]
+    )
+
 
     # NB: Platforms override interpreter constraints.
     assert pex_output["info"]["interpreter_constraints"] == []

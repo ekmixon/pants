@@ -169,9 +169,11 @@ class Field:
         return hash((self.__class__, self.value))
 
     def __eq__(self, other: Union[Any, Field]) -> bool:
-        if not isinstance(other, Field):
-            return NotImplemented
-        return (self.__class__, self.value) == (other.__class__, other.value)
+        return (
+            (self.__class__, self.value) == (other.__class__, other.value)
+            if isinstance(other, Field)
+            else NotImplemented
+        )
 
 
 # NB: By subclassing `Field`, MyPy understands our type hints, and it means it doesn't matter which
@@ -244,12 +246,15 @@ class AsyncFieldMixin(Field):
         return hash((self.__class__, self.value, self.address))
 
     def __eq__(self, other: Union[Any, AsyncFieldMixin]) -> bool:
-        if not isinstance(other, AsyncFieldMixin):
-            return NotImplemented
-        return (self.__class__, self.value, self.address) == (
-            other.__class__,
-            other.value,
-            other.address,
+        return (
+            (self.__class__, self.value, self.address)
+            == (
+                other.__class__,
+                other.value,
+                other.address,
+            )
+            if isinstance(other, AsyncFieldMixin)
+            else NotImplemented
         )
 
 
@@ -340,7 +345,7 @@ class Target:
 
     @final
     @memoized_classproperty
-    def _plugin_field_cls(cls) -> type:
+    def _plugin_field_cls(self) -> type:
         # NB: We ensure that each Target subtype has its own `PluginField` class so that
         # registering a plugin field doesn't leak across target types.
 
@@ -368,12 +373,15 @@ class Target:
         return hash((self.__class__, self.address, self.field_values))
 
     def __eq__(self, other: Union[Target, Any]) -> bool:
-        if not isinstance(other, Target):
-            return NotImplemented
-        return (self.__class__, self.address, self.field_values) == (
-            other.__class__,
-            other.address,
-            other.field_values,
+        return (
+            (self.__class__, self.address, self.field_values)
+            == (
+                other.__class__,
+                other.address,
+                other.field_values,
+            )
+            if isinstance(other, Target)
+            else NotImplemented
         )
 
     @final
@@ -456,9 +464,7 @@ class Target:
         field is not registered.
         """
         result = self._maybe_get(field)
-        if result is not None:
-            return result
-        return field(default_raw_value, self.address)
+        return result if result is not None else field(default_raw_value, self.address)
 
     @final
     @classmethod
@@ -885,11 +891,7 @@ class TargetRootsToFieldSets(Generic[_FS]):
 
     @memoized_property
     def field_sets(self) -> Tuple[_FS, ...]:
-        return tuple(
-            itertools.chain.from_iterable(
-                field_sets_per_target for field_sets_per_target in self.mapping.values()
-            )
-        )
+        return tuple(itertools.chain.from_iterable(iter(self.mapping.values())))
 
     @memoized_property
     def targets(self) -> Tuple[Target, ...]:
@@ -1297,10 +1299,11 @@ class Sources(StringSequenceField, AsyncFieldMixin):
         checking for only 0-1 sources, set the class property `expected_num_files`.
         """
         if self.expected_file_extensions is not None:
-            bad_files = [
-                fp for fp in files if not PurePath(fp).suffix in self.expected_file_extensions
-            ]
-            if bad_files:
+            if bad_files := [
+                fp
+                for fp in files
+                if PurePath(fp).suffix not in self.expected_file_extensions
+            ]:
                 expected = (
                     f"one of {sorted(self.expected_file_extensions)}"
                     if len(self.expected_file_extensions) > 1
@@ -1689,7 +1692,7 @@ class ExplicitlyProvidedDependencies:
             is_ignored = (
                 addr in self.ignores or addr.maybe_convert_to_build_target() in self.ignores
             )
-            if owners_must_be_ancestors is False:
+            if not owners_must_be_ancestors:
                 return not is_ignored
             # NB: `PurePath.is_relative_to()` was not added until Python 3.9. This emulates it.
             try:

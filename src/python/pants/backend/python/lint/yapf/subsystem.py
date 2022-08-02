@@ -101,13 +101,12 @@ class Yapf(PythonToolBase):
         check_content = {}
         for d in ("", *dirs):
             check_existence.append(os.path.join(d, ".yapfignore"))
-            check_content.update(
-                {
-                    os.path.join(d, "pyproject.toml"): b"[tool.yapf",
-                    os.path.join(d, "setup.cfg"): b"[yapf]",
-                    os.path.join(d, ".style.yapf"): b"[style]",
-                }
-            )
+            check_content |= {
+                os.path.join(d, "pyproject.toml"): b"[tool.yapf",
+                os.path.join(d, "setup.cfg"): b"[yapf]",
+                os.path.join(d, ".style.yapf"): b"[style]",
+            }
+
 
         return ConfigFilesRequest(
             specified=self.config,

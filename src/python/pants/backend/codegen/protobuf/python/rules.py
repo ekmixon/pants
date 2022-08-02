@@ -188,10 +188,9 @@ async def generate_python_from_protobuf(
         ),
     )
 
-    # We must do some path manipulation on the output digest for it to look like normal sources,
-    # including adding back a source root.
-    py_source_root = request.protocol_target.get(PythonSourceRootField).value
-    if py_source_root:
+    if py_source_root := request.protocol_target.get(
+        PythonSourceRootField
+    ).value:
         # Verify that the python source root specified by the target is in fact a source root.
         source_root_request = SourceRootRequest(PurePath(py_source_root))
     else:

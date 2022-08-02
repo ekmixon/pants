@@ -117,7 +117,7 @@ class BuildConfiguration:
             :type aliases: :class:`pants.build_graph.build_file_aliases.BuildFileAliases`
             """
             if not isinstance(aliases, BuildFileAliases):
-                raise TypeError("The aliases must be a BuildFileAliases, given {}".format(aliases))
+                raise TypeError(f"The aliases must be a BuildFileAliases, given {aliases}")
 
             for alias, obj in aliases.objects.items():
                 self._register_exposed_object(alias, obj)
@@ -132,9 +132,7 @@ class BuildConfiguration:
 
         def _register_exposed_object(self, alias, obj):
             if alias in self._exposed_object_by_alias:
-                logger.debug(
-                    "Object alias {} has already been registered. Overwriting!".format(alias)
-                )
+                logger.debug(f"Object alias {alias} has already been registered. Overwriting!")
 
             self._exposed_object_by_alias[alias] = obj
             # obj doesn't implement any common base class, so we have to test for this attr.
@@ -146,9 +144,9 @@ class BuildConfiguration:
         ):
             if alias in self._exposed_context_aware_object_factory_by_alias:
                 logger.debug(
-                    "This context aware object factory alias {} has already been registered. "
-                    "Overwriting!".format(alias)
+                    f"This context aware object factory alias {alias} has already been registered. Overwriting!"
                 )
+
 
             self._exposed_context_aware_object_factory_by_alias[
                 alias
@@ -161,15 +159,16 @@ class BuildConfiguration:
         def register_optionables(self, optionables: typing.Iterable[Type[Optionable]] | Any):
             """Registers the given subsystem types."""
             if not isinstance(optionables, Iterable):
-                raise TypeError("The optionables must be an iterable, given {}".format(optionables))
+                raise TypeError(f"The optionables must be an iterable, given {optionables}")
             optionables = tuple(optionables)
             if not optionables:
                 return
 
-            invalid_optionables = [
-                s for s in optionables if not isinstance(s, type) or not issubclass(s, Optionable)
-            ]
-            if invalid_optionables:
+            if invalid_optionables := [
+                s
+                for s in optionables
+                if not isinstance(s, type) or not issubclass(s, Optionable)
+            ]:
                 raise TypeError(
                     "The following items from the given optionables are not Optionable "
                     "subclasses:\n\t{}".format("\n\t".join(str(i) for i in invalid_optionables))
@@ -207,12 +206,11 @@ class BuildConfiguration:
                     f"The entrypoint `target_types` must return an iterable. "
                     f"Given {repr(target_types)}"
                 )
-            bad_elements = [
+            if bad_elements := [
                 tgt_type
                 for tgt_type in target_types
                 if not isinstance(tgt_type, type) or not issubclass(tgt_type, Target)
-            ]
-            if bad_elements:
+            ]:
                 raise TypeError(
                     "Every element of the entrypoint `target_types` must be a subclass of "
                     f"{Target.__name__}. Bad elements: {bad_elements}."

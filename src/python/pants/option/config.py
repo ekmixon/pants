@@ -284,9 +284,11 @@ class _ConfigValues:
             section_values = mapping[current_section]
             if len(remaining_sections) > 1:
                 return recurse(section_values, remaining_sections=remaining_sections[1:])
-            if not self._section_explicitly_defined(section_values):
-                return None
-            return cast(Dict, section_values)
+            return (
+                cast(Dict, section_values)
+                if self._section_explicitly_defined(section_values)
+                else None
+            )
 
         return recurse(mapping=self.values, remaining_sections=section.split("."))
 
@@ -325,9 +327,11 @@ class _ConfigValues:
         def recursively_format_str(value: str) -> str:
             # It's possible to interpolate with a value that itself has an interpolation. We must
             # fully evaluate all expressions for parity with configparser.
-            if not re.search(r"%\([a-zA-Z_0-9]*\)s", value):
-                return value
-            return recursively_format_str(value=format_str(value))
+            return (
+                recursively_format_str(value=format_str(value))
+                if re.search(r"%\([a-zA-Z_0-9]*\)s", value)
+                else value
+            )
 
         return recursively_format_str(raw_value)
 
@@ -390,7 +394,7 @@ class _ConfigValues:
                 # `my_list_option.remove` syntax.
                 if section == "DEFAULT" or "add" in section_values or "remove" in section_values:
                     continue
-                section_name = section if not parent_section else f"{parent_section}.{section}"
+                section_name = f"{parent_section}.{section}" if parent_section else section
                 if self._section_explicitly_defined(section_values):
                     sections.append(section_name)
                 recurse(section_values, parent_section=section_name)
@@ -432,11 +436,9 @@ class _ConfigValues:
                 raise configparser.NoOptionError(option, section)
             add_val = stringify(option_value["add"], list_prefix="+") if has_add else None
             remove_val = stringify(option_value["remove"], list_prefix="-") if has_remove else None
-            if has_add and has_remove:
-                return f"{add_val},{remove_val}"
-            if has_add:
+            if not has_remove:
                 return add_val
-            return remove_val
+            return f"{add_val},{remove_val}" if has_add else remove_val
         return stringify(option_value)
 
     def options(self, section: str) -> List[str]:
@@ -519,17 +521,18 @@ class _SingleFileConfig(Config):
         return self.values.get_value(section, option)
 
     def get_source_for_option(self, section: str, option: str) -> str | None:
-        if self.has_option(section, option):
-            return self.sources()[0]
-        return None
+        return self.sources()[0] if self.has_option(section, option) else None
 
     def __repr__(self) -> str:
         return f"SingleFileConfig({self.config_path})"
 
     def __eq__(self, other: Any) -> bool:
-        if not isinstance(other, _SingleFileConfig):
-            return NotImplemented
-        return self.config_path == other.config_path and self.content_digest == other.content_digest
+        return (
+            self.config_path == other.config_path
+            and self.content_digest == other.content_digest
+            if isinstance(other, _SingleFileConfig)
+            else NotImplemented
+        )
 
     def __hash__(self) -> int:
         return hash(self.content_digest)
@@ -560,16 +563,10 @@ class _ChainedConfig(Config):
         return list(ret)
 
     def has_section(self, section: str) -> bool:
-        for cfg in self._configs:
-            if cfg.has_section(section):
-                return True
-        return False
+        return any(cfg.has_section(section) for cfg in self._configs)
 
     def has_option(self, section: str, option: str) -> bool:
-        for cfg in self._configs:
-            if cfg.has_option(section, option):
-                return True
-        return False
+        return any(cfg.has_option(section, option) for cfg in self._configs)
 
     def get_value(self, section: str, option: str) -> str | None:
         for cfg in self._configs:
@@ -582,10 +579,14 @@ class _ChainedConfig(Config):
         raise configparser.NoOptionError(option, section)
 
     def get_source_for_option(self, section: str, option: str) -> str | None:
-        for cfg in self._configs:
-            if cfg.has_option(section, option):
-                return cfg.get_source_for_option(section, option)
-        return None
+        return next(
+            (
+                cfg.get_source_for_option(section, option)
+                for cfg in self._configs
+                if cfg.has_option(section, option)
+            ),
+            None,
+        )
 
     def __repr__(self) -> str:
         return f"ChainedConfig({self.sources()})"

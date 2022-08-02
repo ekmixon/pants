@@ -42,11 +42,11 @@ class PexBinary(TemplatedExternalTool):
     version_constraints = ">=2.1.42, <3.0"
 
     @classproperty
-    def default_known_versions(cls):
+    def default_known_versions(self):
         return [
             "|".join(
                 (
-                    cls.default_version,
+                    self.default_version,
                     plat,
                     "69d6b1b1009b00dd14a3a9f19b72cff818a713ca44b3186c9b12074b2a31e51f",
                     "3613838",

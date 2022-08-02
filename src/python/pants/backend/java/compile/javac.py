@@ -97,8 +97,7 @@ async def compile_java_source(
     )
 
     classpath_arg = usercp_relpath
-    third_party_classpath_arg = materialized_classpath.classpath_arg()
-    if third_party_classpath_arg:
+    if third_party_classpath_arg := materialized_classpath.classpath_arg():
         classpath_arg = ":".join([classpath_arg, third_party_classpath_arg])
 
     merged_digest = await Get(

@@ -215,7 +215,7 @@ class Parser:
                 key, has_equals_sign, flag_val = flag.partition("=")
                 if not has_equals_sign:
                     if not flag.startswith("--"):  # '-xfoo' style.
-                        key = flag[0:2]
+                        key = flag[:2]
                         flag_val = flag[2:]
                     if not flag_val:
                         # Either a short option with no value or a long option with no equals sign.
@@ -371,8 +371,7 @@ class Parser:
         """
         # First yield any recursive options we inherit from our parent.
         if self._parent_parser:
-            for args, kwargs in self._parent_parser._recursive_option_registration_args():
-                yield args, kwargs
+            yield from self._parent_parser._recursive_option_registration_args()
         # Then yield our directly-registered options.
         for args, kwargs in self._option_registrations:
             if "recursive" in kwargs and self._scope_info.scope != GLOBAL_SCOPE:
@@ -385,8 +384,7 @@ class Parser:
         Includes all the options we inherit recursively from our ancestors.
         """
         if self._parent_parser:
-            for args, kwargs in self._parent_parser._recursive_option_registration_args():
-                yield args, kwargs
+            yield from self._parent_parser._recursive_option_registration_args()
         for args, kwargs in self._option_registrations:
             # Note that all subsystem options are implicitly recursive: a subscope of a subsystem
             # scope is another (optionable-specific) instance of the same subsystem, so it needs
@@ -587,8 +585,7 @@ class Parser:
           - The key in the config file.
           - Computing the name of the env var used to set the option name.
         """
-        dest = kwargs.get("dest")
-        if dest:
+        if dest := kwargs.get("dest"):
             return dest
         # No explicit dest, so compute one based on the first long arg, or the short arg
         # if that's all there is.
@@ -658,29 +655,28 @@ class Parser:
         # May return a string or a dict/list decoded from a json/yaml file.
         def expand(val_or_str):
             if (
-                kwargs.get("fromfile", True)
-                and isinstance(val_or_str, str)
-                and val_or_str.startswith("@")
+                not kwargs.get("fromfile", True)
+                or not isinstance(val_or_str, str)
+                or not val_or_str.startswith("@")
             ):
-                if val_or_str.startswith("@@"):  # Support a literal @ for fromfile values via @@.
-                    return val_or_str[1:]
-                else:
-                    fromfile = val_or_str[1:]
-                    try:
-                        with open(fromfile, "r") as fp:
-                            s = fp.read().strip()
-                            if fromfile.endswith(".json"):
-                                return json.loads(s)
-                            elif fromfile.endswith(".yml") or fromfile.endswith(".yaml"):
-                                return yaml.safe_load(s)
-                            else:
-                                return s
-                    except (IOError, ValueError, yaml.YAMLError) as e:
-                        raise FromfileError(
-                            f"Failed to read {dest} in {self._scope_str()} from file {fromfile}: {e!r}"
-                        )
-            else:
                 return val_or_str
+
+            if val_or_str.startswith("@@"):
+                return val_or_str[1:]
+            fromfile = val_or_str[1:]
+            try:
+                with open(fromfile, "r") as fp:
+                    s = fp.read().strip()
+                    if fromfile.endswith(".json"):
+                        return json.loads(s)
+                    elif fromfile.endswith(".yml") or fromfile.endswith(".yaml"):
+                        return yaml.safe_load(s)
+                    else:
+                        return s
+            except (IOError, ValueError, yaml.YAMLError) as e:
+                raise FromfileError(
+                    f"Failed to read {dest} in {self._scope_str()} from file {fromfile}: {e!r}"
+                )
 
         # Get value from config files, and capture details about its derivation.
         config_details = None
@@ -802,9 +798,13 @@ class Parser:
             if val is None:
                 return
             choices = kwargs.get("choices")
-            if choices is None and "type" in kwargs:
-                if inspect.isclass(type_arg) and issubclass(type_arg, Enum):
-                    choices = list(type_arg)
+            if (
+                choices is None
+                and "type" in kwargs
+                and inspect.isclass(type_arg)
+                and issubclass(type_arg, Enum)
+            ):
+                choices = list(type_arg)
             if choices is not None and val not in choices:
                 raise ParseError(
                     f"`{val}` is not an allowed value for option {dest} in {self._scope_str()}. "
@@ -840,9 +840,12 @@ class Parser:
         if isinstance(final_val.value, list):
             for component in final_val.value:
                 check_scalar_value(component)
-            if inspect.isclass(member_type) and issubclass(member_type, Enum):
-                if len(final_val.value) != len(set(final_val.value)):
-                    raise ParseError(f"Duplicate enum values specified in list: {final_val.value}")
+            if (
+                inspect.isclass(member_type)
+                and issubclass(member_type, Enum)
+                and len(final_val.value) != len(set(final_val.value))
+            ):
+                raise ParseError(f"Duplicate enum values specified in list: {final_val.value}")
         elif isinstance(final_val.value, dict):
             for component in final_val.value.values():
                 check_scalar_value(component)

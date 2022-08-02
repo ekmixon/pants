@@ -121,8 +121,9 @@ async def pants_setup_kwargs(
         license="Apache License, Version 2.0",
         zip_safe=True,
     )
-    conflicting_hardcoded_kwargs = set(kwargs.keys()).intersection(hardcoded_kwargs.keys())
-    if conflicting_hardcoded_kwargs:
+    if conflicting_hardcoded_kwargs := set(kwargs.keys()).intersection(
+        hardcoded_kwargs.keys()
+    ):
         raise ValueError(
             f"These kwargs should not be set in the `provides` field for {request.target.address} "
             "because Pants's internal plugin will automatically set them: "

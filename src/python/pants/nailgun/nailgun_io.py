@@ -72,10 +72,10 @@ class NailgunStreamWriter(_StoppableDaemonThread):
         self._buf_size = buf_size or io.DEFAULT_BUFFER_SIZE
         self._select_timeout = select_timeout or self.SELECT_TIMEOUT
         self._assert_aligned(in_fds, chunk_types)
-        self._fileno_chunk_type_map = {f: t for f, t in zip(in_fds, chunk_types)}
+        self._fileno_chunk_type_map = dict(zip(in_fds, chunk_types))
 
     @classmethod
-    def _assert_aligned(self, *iterables):
+    def _assert_aligned(cls, *iterables):
         assert len({len(i) for i in iterables}) == 1, "inputs are not aligned"
 
     def _handle_closed_input_stream(self, fileno):
@@ -112,14 +112,13 @@ class NailgunStreamWriter(_StoppableDaemonThread):
         """Represents one iteration of the infinite reading cycle."""
         if readable_fds:
             for fileno in readable_fds:
-                data = os.read(fileno, self._buf_size)
-                if not data:
-                    self._handle_closed_input_stream(fileno)
-                else:
+                if data := os.read(fileno, self._buf_size):
                     NailgunProtocol.write_chunk(
                         self._socket, self._fileno_chunk_type_map[fileno], data
                     )
 
+                else:
+                    self._handle_closed_input_stream(fileno)
         if errored_fds:
             for fileno in errored_fds:
                 self._stop_reading_from_fd(fileno)

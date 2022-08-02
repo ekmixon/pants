@@ -44,13 +44,13 @@ class GoalSubsystem(Subsystem):
 
     @classproperty
     @abstractmethod
-    def name(cls):
+    def name(self):
         """The name used to select the corresponding Goal on the commandline and the options_scope
         for its options."""
 
     @classproperty
-    def options_scope(cls) -> str:  # type: ignore[override]
-        return cast(str, cls.name)
+    def options_scope(self) -> str:  # type: ignore[override]
+        return cast(str, self.name)
 
 
 @dataclass(frozen=True)
@@ -78,8 +78,8 @@ class Goal:
 
     @final
     @classproperty
-    def name(cls) -> str:
-        return cast(str, cls.subsystem_cls.name)
+    def name(self) -> str:
+        return cast(str, self.subsystem_cls.name)
 
 
 class Outputting:
